@@ -2,6 +2,7 @@
 
 import logging
 import time
+import threading # Import threading
 from typing import Dict, List, Any, Optional, Callable
 
 from logging_config import get_logger
@@ -81,13 +82,15 @@ class StarResonanceMonitor:
         """Checks if module data has been captured and stored"""
         return self.captured_modules is not None
 
-    def rescreen_modules(self, category: str, attributes: List[str]):
-        """Rescreens captured data with new filter conditions"""
+    def _run_optimization_in_background(self, category: str, attributes: List[str]):
+        """
+        Runs the optimization process in a separate thread to avoid blocking the UI.
+        """
         if not self.has_captured_data():
-            print("Error: No module data available for rescreening.")
+            logger.error("Error: No module data available for optimization.")
             return
 
-        print(f"\n--- Starting rescreening with new conditions ---")
+        print(f"\n--- Starting optimization in background with new conditions ---")
         print(f"Module Type: {category}")
         print(f"Prioritized Attributes: {', '.join(attributes) if attributes else 'None'}")
         
@@ -97,21 +100,37 @@ class StarResonanceMonitor:
         }
         target_category = category_map.get(category, ModuleCategory.All)
         
-        # Call optimizer to get solutions
-        solutions = self.module_optimizer.get_optimal_solutions(
-            self.captured_modules,
-            target_category,
-            top_n=20,
-            prioritized_attrs=attributes,
-            progress_callback=self.progress_callback
-        )
+        try:
+            solutions = self.module_optimizer.get_optimal_solutions(
+                self.captured_modules,
+                target_category,
+                top_n=20,
+                prioritized_attrs=attributes,
+                progress_callback=self.progress_callback
+            )
 
-        # Pass results to the GUI via callback
-        if self.on_results_callback and solutions:
-            self.on_results_callback(solutions)
-        
-        # Also, print details to console to maintain original functionality
-        num_solutions = len(solutions)
-        for i, solution in enumerate(reversed(solutions)):
-            rank = num_solutions - i
-            self.module_optimizer.print_solution_details(solution, rank)
+            if self.on_results_callback and solutions:
+                self.on_results_callback(solutions)
+            
+            num_solutions = len(solutions)
+            for i, solution in enumerate(reversed(solutions)):
+                rank = num_solutions - i
+                self.module_optimizer.print_solution_details(solution, rank)
+        except Exception as e:
+            logger.error(f"Optimization process failed: {e}")
+            if self.progress_callback:
+                self.progress_callback("Optimization failed.")
+
+    def rescreen_modules(self, category: str, attributes: List[str]):
+        """Rescreens captured data with new filter conditions by running optimization in a separate thread."""
+        if not self.has_captured_data():
+            print("Error: No module data available for rescreening.")
+            return
+
+        # Start the optimization in a new thread
+        optimization_thread = threading.Thread(
+            target=self._run_optimization_in_background,
+            args=(category, attributes),
+            daemon=True
+        )
+        optimization_thread.start()
