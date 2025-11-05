@@ -12,8 +12,6 @@ Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 SourceDir=D:\proyectos programacion\AutoModuleEN
-WizardImageFile=Back.webp
-WizardSmallImageFile=icon.ico
 UninstallDisplayIcon={app}\gui_app.exe
 PrivilegesRequired=admin
 DisableProgramGroupPage=yes
@@ -30,4 +28,4 @@ Name: "{autodesktop}\BPSR Module Optimizer"; Filename: "{app}\gui_app.exe"; Icon
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Run]
-Filename: "{tmp}\npcap-1.83.exe"; Parameters: "/S"; StatusMsg: "Instalando Npcap (requerido para la captura de paquetes)..."
+Filename: "{tmp}\npcap-1.83.exe"; Parameters: ""; StatusMsg: "Por favor, sigue el asistente para instalar Npcap (requerido para la captura de paquetes)..."; Flags: waituntilterminated

@@ -23,10 +23,9 @@ def setup_logging(level=logging.INFO, debug_mode=False):
     if debug_mode:
         level = logging.DEBUG
     
-    # Create log directory
-    log_dir = "logs"
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+    # Create log directory in user's home directory
+    log_dir = os.path.join(os.path.expanduser('~'), '.star_resonance_logs')
+    os.makedirs(log_dir, exist_ok=True)
     
     # Generate log file name (including timestamp)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
