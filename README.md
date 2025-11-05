@@ -8,7 +8,7 @@
 
 🚀 A graphical interface tool to capture and analyze in-game modules, facilitating the automatic discovery of optimal equipment combinations.
 
-![Application Screenshot](https://github.com/mrsrsnakke/gachaIMG/blob/main/img1.png?raw=true)
+![Captura de pantalla de la aplicación](https://github.com/mrsnakke/gachaIMG/blob/main/img1.png?raw=true)
 
 ## 🌟 Key Features
 
