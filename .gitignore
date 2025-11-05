@@ -33,3 +33,8 @@ ENV/
 # IDE specific files
 .idea/
 .vscode/
+
+# Generated files and installers
+Output/
+npcap-1.83.exe
+BPSR Module Optimizer.spec
