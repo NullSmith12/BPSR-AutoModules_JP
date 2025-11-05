@@ -118,7 +118,6 @@ Herramienta con interfaz gráfica para capturar y analizar los módulos del jueg
 
 [![English](https://img.shields.io/badge/English-blue?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4NDAgNjMwIj48cGF0aCBmaWxsPSIjYjIyMjM0IiBkPSJNMCAwaDk4MHY2ODNIMHoiLz48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMCA3Nmg5ODB2NTJIMHptMCAxNTJoOTgwdi01Mkgwem0wIDE1Mmg5ODB2LTUySDB6bTAgMTUyaDk4MHYtNTJIMHptMCAxNTJoOTgwdi01MkgweiIvPjxwYXRoIGZpbGw9IiMwMDMyOTYiIGQ9Ik0wIDBoNDIwVjM2OEgwem0zMCAyNGwzMyAxMDIgMTAtMzEtMzItODcgNzIgMzcgOTctMzcgMTIgMzItNzIgODYgMTIgMzEgOTYtMzcgNzIgMzYtMzItODcgMTAtMzIgMzMgMTAyLTEwMy02Mi0xMDMgNjIgMzMgMTAyIDEwLTMxLTMyLTg3IDcyIDM3IDk3LTM3IDEyIDMyLTcyIDg2IDEyIDMxIDk2LTM3IDcyIDM2LTMyLTg3IDEwLTMyIDMzIDEwMi0xMDMtNjItMTAzIDYyem0wIDEyMGwzMyAxMDIgMTAtMzEtMzItODcgNzIgMzcgOTctMzcgMTIgMzItNzIgODYgMTIgMzEgOTYtMzcgNzIgMzYtMzItODcgMTAtMzIgMzMgMTAyLTEwMy02Mi0xMTAgNjIgMzMgMTAyIDEwLTMxLTMyLTg3IDcyIDM3IDk3LTM3IDEyIDMyLTcyIDg2IDEyIDMxIDk2LTM3IDcyIDM2LTMyLTg3IDEwLTMyIDMzIDEwMi0xMDMtNjItMTAzIDYyem0xNjggMTIwbDMzIDEwMiAxMC0zMS0zMi04NyA3MiAzNyA5Ny0zNyAxMiAzMi03MiA4NiAxMiAzMSA5Ni0zNyA3MiAzNi0zMi04NyAxMC0zMiAzMyAxMDItMTAzLTYyLTEwMyA2MnoiLz48L3N2Zz4=)](#BPSR Auto Modules — Module Optimizer)
 
-[![English](https://img.shields.io/badge/English-blue?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4NDAgNjMwIj48cGF0aCBmaWxsPSIjYjIyMjM0IiBkPSJNMCAwaDk4MHY2ODNIMHoiLz48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMCA3Nmg5ODB2NTJIMHptMCAxNTJoOTgwdi01Mkgwem0wIDE1Mmg5ODB2LTUySDB6bTAgMTUyaDk4MHYtNTJIMHptMCAxNTJoOTgwdi01MkgweiIvPjxwYXRoIGZpbGw9IiMwMDMyOTYiIGQ9Ik0wIDBoNDIwVjM2OEgwem0zMCAyNGwzMyAxMDIgMTAtMzEtMzItODcgNzIgMzcgOTctMzcgMTIgMzItNzIgODYgMTIgMzEgOTYtMzcgNzIgMzYtMzItODcgMTAtMzIgMzMgMTAyLTEwMy02Mi0xMDMgNjIgMzMgMTAyIDEwLTMxLTMyLTg3IDcyIDM3IDk3LTM3IDEyIDMyLTcyIDg2IDEyIDMxIDk2LTM3IDcyIDM2LTMyLTg3IDEwLTMyIDMzIDEwMi0xMDMtNjItMTAzIDYyem0wIDEyMGwzMyAxMDIgMTAtMzEtMzItODcgNzIgMzcgOTctMzcgMTIgMzItNzIgODYgMTIgMzEgOTYtMzcgNzIgMzYtMzItODcgMTAtMzIgMzMgMTAyLTEwMy02Mi0xMTAgNjIgMzMgMTAyIDEwLTMxLTMyLTg3IDcyIDM3IDk3LTM3IDEyIDMyLTcyIDg2IDEyIDMxIDk2LTM3IDcyIDM2LTMyLTg3IDEwLTMyIDMzIDEwMi0xMDMtNjItMTAzIDYyem0xNjggMTIwbDMzIDEwMiAxMC0zMS0zMi04NyA3MiAzNyA5Ny0zNyAxMiAzMi03MiA4NiAxMiAzMSA5Ni0zNyA3MiAzNi0zMi04NyAxMC0zMiAzMyAxMDItMTAzLTYyLTEwMyA2MnoiLz48L3N2Zz4=)](#-BPSR Auto Modules — Module Optimizer)
 
 ![Captura de pantalla de la aplicación](https://github.com/mrsnakke/gachaIMG/blob/main/img1.png?raw=true)
 
@@ -183,7 +182,7 @@ Sigue estos pasos para configurar y ejecutar el proyecto:
 ## Uso
 
 1.  **Ejecutar la aplicación**:
-    Una vez que todas las dependencias estén instaladas, puedes iniciar la aplicación ejecutando el script principal:
+    Once all dependencies are installed, you can start the application by running the main script:
     ```bash
     python gui_app.py
     ```
@@ -213,14 +212,14 @@ Sigue estos pasos para configurar y ejecutar el proyecto:
 ## Créditos
 
 - Este proyecto es un fork que integra y adapta trabajo previo de otros autores.
-- Crédits principales:
-    - Fork basado en: StarResonanceAutoMod — autor: fudiyangjin
+- Main credits:
+    - Fork based on: StarResonanceAutoMod — autor: fudiyangjin
         https://github.com/fudiyangjin/StarResonanceAutoMod
-    - Además agradecemos el trabajo complementario de StarResonanceDamageCounter (dmlgzs):
+    - We also appreciate the complementary work of StarResonanceDamageCounter (dmlgzs):
         https://github.com/dmlgzs/StarResonanceDamageCounter
 
-Si utilizas este proyecto, por favor respeta las licencias y atribuciones originales.
+If you use this project, please respect the original licenses and attributions.
 
 ---
 
-**Descargo de responsabilidad**: Esta herramienta es únicamente para fines de aprendizaje y análisis de datos. No debe usarse para actividades que infrinjan los términos de servicio del juego. El usuario asume los riesgos asociados. El autor del proyecto no se hace responsable del uso indebido por parte de terceros. Asegúrate de cumplir las normas y políticas del juego y la comunidad antes de usarla.
+**Disclaimer**: This tool is for learning and data analysis purposes only. It should not be used for activities that violate the game's terms of service. The user assumes the associated risks. The project author is not responsible for misuse by third parties. Make sure to comply with game and community rules and policies before using it.
