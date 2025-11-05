@@ -707,7 +707,8 @@ class App(ctk.CTk):
             attr_dist_frame = ctk.CTkFrame(stats_frame, fg_color="transparent")
             attr_dist_frame.pack(anchor="w", padx=10, pady=2, fill="x")
 
-            for attr_name, value in sorted(solution.attr_breakdown.items()):
+            # Sort attributes by value (Lv) in descending order
+            for attr_name, value in sorted(solution.attr_breakdown.items(), key=lambda item: item[1], reverse=True):
                 level_str = "(Lv.0)"
                 if value >= 20: level_str = "(Lv.6)"
                 elif value >= 16: level_str = "(Lv.5)"
