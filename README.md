@@ -8,7 +8,7 @@
 
 A graphical interface tool to capture and analyze in-game modules, facilitating the automatic discovery of optimal equipment combinations.
 
-![Application Screenshot](https://github.com/mrsnakke/gachaIMG/blob/main/img1.png?raw=true)
+![Application Screenshot](https://github.com/mrsrsnakke/gachaIMG/blob/main/img1.png?raw=true)
 
 ## Key Features
 
@@ -25,7 +25,44 @@ A graphical interface tool to capture and analyze in-game modules, facilitating 
     - Summary of total attribute distribution and estimated combat power calculation.
 - Integrated console — process logs visible in a panel that you can show or hide.
 
-## Prerequisites
+## Installation and Usage (For Users preferring a simple installation - Recommended)
+
+For a quick and easy setup, use our installer.
+
+1.  **Download the Installer**:
+    Download the latest version of `BPSR Module Optimizer Setup.exe` from the [releases page](https://github.com/mrsnakke/BPSR-AutoModules/releases).
+
+2.  **Run the Installer**:
+    -   Double-click `BPSR Module Optimizer Setup.exe` to start the installation.
+    -   The installer will guide you through the process.
+    -   **Npcap Installation (Important!)**: The application requires `Npcap` to capture game data.
+        -   If `Npcap` is not detected on your system, the installer will prompt you to install it. Follow the on-screen instructions for `Npcap`.
+        -   During `Npcap` installation, make sure to check the option "Install Npcap in WinPcap API-compatible Mode" if available. This is crucial for the application to function correctly.
+        -   If `Npcap` is already installed, the installer will proceed directly with the application installation.
+
+3.  **Launch the Application**:
+    -   Once the installation is complete, you can launch "BPSR Module Optimizer" from your desktop shortcut or the Start Menu.
+
+4.  **Initial Configuration in the Application**:
+    -   Open the configuration panel ("Config" button).
+    -   Select the network interface you use (Ethernet or Wi-Fi).
+    -   Choose the module type (Attack / Guard / Support / All).
+    -   Define attributes manually or select a preset.
+
+5.  **Start Monitoring**:
+    -   Click "Start Monitoring" to begin capturing.
+    -   In the game, trigger data transmission (e.g., changing channels or returning to the character selection screen).
+    -   The application will detect the data and display the best results in the main panel.
+
+6.  **Adjust and Re-filter**:
+    -   Adjust filters and use "Rescreen" to recalculate without re-capturing.
+    -   When finished, click "Stop Monitoring".
+
+## Installation and Usage (For Advanced Users - Direct Python Execution)
+
+If you prefer to run the application directly from Python, follow these steps.
+
+### Prerequisites
 
 To run this project, you will need the following:
 
@@ -36,7 +73,7 @@ To run this project, you will need the following:
 
 Npcap allows the application to read the network packets necessary to extract module data.
 
-## Installation
+### Installation
 
 Follow these steps to set up and run the project:
 
@@ -64,7 +101,7 @@ Follow these steps to set up and run the project:
     ```
     *Note: `scapy` may require administrator permissions on some systems for installation or execution.*
 
-## Usage
+### Usage
 
 1.  **Run the application**:
     Once all dependencies are installed, you can start the application by running the main script:
@@ -138,7 +175,44 @@ Herramienta con interfaz gráfica para capturar y analizar los módulos del jueg
     - Resumen de la distribución total de atributos y cálculo del poder de combate estimado.
 - Consola integrada — registros de proceso visibles en un panel que puedes mostrar u ocultar.
 
-## Requisitos previos
+## Instalación y Uso (Para Usuarios que prefieren una instalación sencilla - Recomendado)
+
+Para una configuración rápida y sencilla, utiliza nuestro instalador.
+
+1.  **Descarga el Instalador**:
+    Descarga la última versión de `BPSR Module Optimizer Setup.exe` desde la [página de lanzamientos](https://github.com/mrsnakke/BPSR-AutoModules/releases).
+
+2.  **Ejecuta el Instalador**:
+    -   Haz doble clic en `BPSR Module Optimizer Setup.exe` para iniciar la instalación.
+    -   El instalador te guiará a través del proceso.
+    -   **Instalación de Npcap (¡Importante!)**: La aplicación requiere `Npcap` para capturar los datos del juego.
+        -   Si `Npcap` no se detecta en tu sistema, el instalador te pedirá que lo instales. Sigue las instrucciones en pantalla para `Npcap`.
+        -   Durante la instalación de `Npcap`, asegúrate de marcar la opción "Install Npcap in WinPcap API-compatible Mode" si está disponible. Esto es crucial para que la aplicación funcione correctamente.
+        -   Si `Npcap` ya está instalado, el instalador procederá directamente con la instalación de la aplicación.
+
+3.  **Inicia la Aplicación**:
+    -   Una vez completada la instalación, puedes iniciar "BPSR Module Optimizer" desde el acceso directo en tu escritorio o desde el Menú Inicio.
+
+4.  **Configuración inicial en la aplicación**:
+    -   Abre el panel de configuración (botón "Config").
+    -   Selecciona la interfaz de red que usas (Ethernet o Wi‑Fi).
+    -   Elige el tipo de módulo (Attack / Guard / Support / All).
+    -   Define atributos manualmente o selecciona un preset.
+
+5.  **Iniciar monitoreo**:
+    -   Haz clic en "Start Monitoring" para comenzar la captura.
+    -   En el juego, provoca el envío de datos (por ejemplo, cambiando de canal o volviendo a la pantalla de selección de personaje).
+    -   La aplicación detectará los datos y mostrará los mejores resultados en el panel principal.
+
+6.  **Ajustar y re-filtrar**:
+    -   Ajusta los filtros y usa "Rescreen" para recalcular sin volver a capturar.
+    -   Cuando termines, haz clic en "Stop Monitoring".
+
+## Instalación y Uso (Para Usuarios Avanzados - Ejecución Directa con Python)
+
+Si prefieres ejecutar la aplicación directamente desde Python, sigue estos pasos.
+
+### Requisitos previos
 
 Para ejecutar este proyecto, necesitarás lo siguiente:
 
@@ -149,7 +223,7 @@ Para ejecutar este proyecto, necesitarás lo siguiente:
 
 Npcap permite que la aplicación lea los paquetes de red necesarios para extraer los datos de los módulos.
 
-## Instalación
+### Instalación
 
 Sigue estos pasos para configurar y ejecutar el proyecto:
 
@@ -177,7 +251,7 @@ Sigue estos pasos para configurar y ejecutar el proyecto:
     ```
     *Nota: `scapy` puede requerir permisos de administrador en algunos sistemas para su instalación o ejecución.*
 
-## Uso
+### Uso
 
 1.  **Ejecutar la aplicación**:
     Una vez instaladas todas las dependencias, puedes iniciar la aplicación ejecutando el script principal:

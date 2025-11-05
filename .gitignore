@@ -38,3 +38,4 @@ ENV/
 Output/
 npcap-1.83.exe
 BPSR Module Optimizer.spec
+RELEASE_NOTES.md
