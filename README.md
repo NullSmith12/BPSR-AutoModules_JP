@@ -1,5 +1,7 @@
-[![Español](https://img.shields.io/badge/Espa%C3%B1ol-red?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3NTAgNTAwIj48cGF0aCBmaWxsPSIjY2YxNDJiIiBkPSJNMCAwaDc1MHY1MDBIMHoiLz48cGF0aCBmaWxsPSIjZmNkZDA3IiBkPSJNMCAxMjVoNzUwdjI1MEgwVjEyNXoiLz48cGF0aCBmaWxsPSIjMDA0MzQ2IiBkPSJNMCAwYzI3LjYxNCAwIDU1LjIyOCAxMS4wNDUgNzUuNzU3IDMwLjU4N0wxMjUgNzUuNzU3VjBIMHoiLz48cGF0aCBmaWxsPSIjMDA0MzQ2IiBkPSJNMCA1MDBjMjcuNjE0IDAgNTUuMjI4LTExLjA0NSA3NS43NTctMzAuNTg3TDEyNSA0MjQuMjQzVjUwMEgwWiIvPjxwYXRoIGZpbGw9IiMwMDQzNDYiIGQ9Ik03NTAgMGMtMjcuNjE0IDAtNTUuMjI4IDExLjA0NS03NS43NTcgMzAuNTg3TDYyNSA3NS43NTdWMDBINzUwWiIvPjxwYXRoIGZpbGw9IiMwMDQzNDYiIGQ9Ik03NTAgNTAwYy0yNy42MTQgMC01NS4yMjgtMTEuMDQ1LTc1Ljc1Ny0zMC41ODdMNjI1IDQyNC4yNDNWNTAwSDc1MFoiLz48Y2lyY2xlIGN4PSIzNzUiIGN5PSIyNTAiIHI9IjgwIiBmaWxsPSIjZmNkZDA3Ii8+PHBhdGggZmlsbD0iI2JkM2Q0YyIgZD0iTTM3NSAxNzBjLTQ0LjE4MyAwLTgwIDM1LjgyLTgwIDgwczM1LjgyIDgwIDgwIDgwIDgwLTM1LjgyIDgwLTgwLTM1LjgyLTgwLTgwLTgweiIvPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0zNzUgMTkwYzMzLjEzNyAwIDYwIDI2Ljg2MyA2MCA2MHMtMjYuODYzIDYwLTYwIDYwLTYwLTI2Ljg2My02MC02MCAyNi44NjMtNjAgNjAtNjB6Ii8+PHBhdGggZmlsbD0iI2JkM2Q0YyIgZD0iTTM3NSAyMDBjMjcuNjE0IDAgNTAtMjIuMzg2IDUwLTUwcy0yMi4zODYtNTAtNTAtNTAtNTAtMjIuMzg2LTUwLTUwIDIyLjM4Ni01MCA1MC01MHoiLz48cGF0aCBmaWxsPSIjZmNkZDA3IiBkPSJNMzU1IDI1MGgyMHYyMGgtMjB6TTM2NSAyMzBoMjB2MjBoLTIwem0xMC0yMGgyMHYyMGgtMjB6TTM3NSAyMjBoMjB2MjBoLTIwem0xMC0yMGgyMHYyMGgtMjB6Ii8+PC9zdmc+)](#BPSR Auto Modules — Optimizador de módulos-version-española)
+<!-- Botón para saltar a la versión en Español -->
+[![Español](https://img.shields.io/badge/Espa%C3%B1ol-red?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3NTAgNTAwIj48cGF0aCBmaWxsPSIjY2YxNDJiIiBkPSJNMCAwaDc1MHY1MDBIMHoiLz48cGF0aCBmaWxsPSIjZmNkZDA3IiBkPSJNMCAxMjVoNzUwdjI1MEgwVjEyNXoiLz48cGF0aCBmaWxsPSIjMDA0MzQ6IiBkPSJNMCAwYzI3LjYxNCAwIDU1LjIyOCAxMS4wNDUgNzUuNzU3IDMwLjU4N0wxMjUgNzUuNzU3VjBIMHoiLz48cGF0aCBmaWxsPSIjMDA0MzQ2IiBkPSJNMCA1MDBjMjcuNjE0IDAgNTUuMjI4LTExLjA0NSA3NS43NTctMzAuNTg3TDEyNSA0MjQuMjQzVjUwMEgwWiIvPjxwYXRoIGZpbGw9IiMwMDQzNDYiIGQ9Ik03NTAgMGMtMjcuNjE0IDAtNTUuMjI4IDExLjA0NS03NS43NTcgMzAuNTg3TDYyNSA3NS43NTdWMDBINzUwWiIvPjxwYXRoIGZpbGw9IiMwMDQzNDYiIGQ9Ik03NTAgNTAwYy0yNy42MTQgMC01NS4yMjgtMTEuMDQ1LTc1Ljc1Ny0zMC41ODdMNjI1IDQyNC4yNDNWNTAwSDc1MFoiLz48Y2lyY2xlIGN4PSIzNzUiIGN5PSIyNTAiIHI9IjgwIiBmaWxsPSIjZmNkZDA3Ii8+PHBhdGggZmlsbD0iI2JkM2Q0YyIgZD0iTTM3NSAxNzBjLTQ0LjE4MyAwLTgwIDM1LjgyLTgwIDgwczM1LjgyIDgwIDgwIDgwIDgwLTM1LjgyIDgwLTgwLTM1LjgyLTgwLTgwLTgweiIvPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0zNzUgMTkwYzMzLjEzNyAwIDYwIDI2Ljg2MyA2MCA2MHMtMjYuODYzIDYwLTYwIDYwLTYwLTI2Ljg2My02MC02MCAyNi44NjMtNjAgNjAtNjB6Ii8+PHBhdGggZmlsbD0iI2JkM2Q0YyIgZD0iTTM3NSAyMDBjMjcuNjE0IDAgNTAtMjIuMzg2IDUwLTUwcy0yMi4zODYtNTAtNTAtNTAtNTAtMjIuMzg2LTUwLTUwIDIyLjM4Ni01MCA1MC01MHoiLz48cGF0aCBmaWxsPSIjZmNkZDA3IiBkPSJNMzU1IDI1MGgyMHYyMGgtMjB6TTM2NSAyMzBoMjB2MjBoLTIwem0xMC0yMGgyMHYyMGgtMjB6TTM3NSAyMjBoMjB2MjBoLTIwem0xMC0yMGgyMHYyMGgtMjB6Ii8+PC9zdmc+)](#spanish-version)
 
+<a id="english-version"></a>
 # BPSR Auto Modules — Module Optimizer
 
 A graphical interface tool to capture and analyze in-game modules, facilitating the automatic discovery of optimal equipment combinations.
@@ -51,10 +53,6 @@ Follow these steps to set up and run the project:
     -   **On Windows**:
         ```bash
         .\venv\Scripts\activate
-        ```
-    -   **On macOS/Linux**:
-        ```bash
-        source venv/bin/activate
         ```
 
 3.  **Install dependencies**:
@@ -109,15 +107,16 @@ If you use this project, please respect the original licenses and attributions.
 
 **Disclaimer**: This tool is for learning and data analysis purposes only. It should not be used for activities that violate the game's terms of service. The user assumes the associated risks. The project author is not responsible for misuse by third parties. Make sure to comply with game and community rules and policies before using it.
 
-<a name="BPSR Auto Modules — Module Optimizer-english-version"></a>
 <br>
 
+<a id="spanish-version"></a>
 # BPSR Auto Modules — Optimizador de módulos
 
+<!-- Botón para saltar a la versión en Inglés -->
+[![English](https://img.shields.io/badge/English-blue?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4NDAgNjMwIj48cGF0aCBmaWxsPSIjYjIyMjM0IiBkPSJNMCAwaDk4MHY2ODNIMHoiLz48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMCA3Nmg5ODB2NTJIMHptMCAxNTJoOTgwdi01Mkgwem0wIDE1Mmg5ODB2LTUySDB6bTAgMTUyaDk4MHYtNTJIMHptMCAxNTJoOTgwdi01MkgweiIvPjxwYXRoIGZpbGw9IiMwMDMyOTYiIGQ9Ik0wIDBoNDIwVjM2OEgwem0zMCAyNGwzMyAxMDIgMTAtMzEtMzItODcgNzIgMzcgOTctMzcgMTIgMzItNzIgODYgMTIgMzEgOTYtMzcgNzIgMzYtMzItODcgMTAtMzIgMzMgMTAyLTEwMy02Mi0xMDMgNjIgMzMgMTAyIDEwLTMxLTMyLTg3IDcyIDM3IDk3LTM3IDEyIDMyLTcyIDg2IDEyIDMxIDk2LTM3IDcyIDM2LTMyLTg3IDEwLTMyIDMzIDEwMi0xMDMtNjItMTAzIDYyem0wIDEyMGwzMyAxMDIgMTAtMzEtMzItODcgNzIgMzcgOTctMzcgMTIgMzItNzIgODYgMTIgMzEgOTYtMzcgNzIgMzYtMzItODcgMTAtMzIgMzMgMTAyLTEwMy02Mi0xMTAgNjIgMzMgMTAyIDEwLTMxLTMyLTg3IDcyIDM3IDk3LTM3IDEyIDMyLTcyIDg2IDEyIDMxIDk2LTM3IDcyIDM2LTMyLTg3IDEwLTMyIDMzIDEwMi0xMDMtNjItMTAzIDYyem0xNjggMTIwbDMzIDEwMiAxMC0zMS0zMi04NyA3MiAzNyA5Ny0zNyAxMiAzMi03MiA4NiAxMiAzMSA5Ni0zNyA3MiAzNi0zMi04NyAxMC0zMiAzMyAxMDItMTAzLTYyLTEwMyA2MnoiLz48L3N2Zz4=)](#english-version)
+
+
 Herramienta con interfaz gráfica para capturar y analizar los módulos del juego, que facilita encontrar combinaciones óptimas de equipamiento de forma automática.
-
-[![English](https://img.shields.io/badge/English-blue?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4NDAgNjMwIj48cGF0aCBmaWxsPSIjYjIyMjM0IiBkPSJNMCAwaDk4MHY2ODNIMHoiLz48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMCA3Nmg5ODB2NTJIMHptMCAxNTJoOTgwdi01Mkgwem0wIDE1Mmg5ODB2LTUySDB6bTAgMTUyaDk4MHYtNTJIMHptMCAxNTJoOTgwdi01MkgweiIvPjxwYXRoIGZpbGw9IiMwMDMyOTYiIGQ9Ik0wIDBoNDIwVjM2OEgwem0zMCAyNGwzMyAxMDIgMTAtMzEtMzItODcgNzIgMzcgOTctMzcgMTIgMzItNzIgODYgMTIgMzEgOTYtMzcgNzIgMzYtMzItODcgMTAtMzIgMzMgMTAyLTEwMy02Mi0xMDMgNjIgMzMgMTAyIDEwLTMxLTMyLTg3IDcyIDM3IDk3LTM3IDEyIDMyLTcyIDg2IDEyIDMxIDk2LTM3IDcyIDM2LTMyLTg3IDEwLTMyIDMzIDEwMi0xMDMtNjItMTAzIDYyem0wIDEyMGwzMyAxMDIgMTAtMzEtMzItODcgNzIgMzcgOTctMzcgMTIgMzItNzIgODYgMTIgMzEgOTYtMzcgNzIgMzYtMzItODcgMTAtMzIgMzMgMTAyLTEwMy02Mi0xMTAgNjIgMzMgMTAyIDEwLTMxLTMyLTg3IDcyIDM3IDk3LTM3IDEyIDMyLTcyIDg2IDEyIDMxIDk2LTM3IDcyIDM2LTMyLTg3IDEwLTMyIDMzIDEwMi0xMDMtNjItMTAzIDYyem0xNjggMTIwbDMzIDEwMiAxMC0zMS0zMi04NyA3MiAzNyA5Ny0zNyAxMiAzMi03MiA4NiAxMiAzMSA5Ni0zNyA3MiAzNi0zMi04NyAxMC0zMiAzMyAxMDItMTAzLTYyLTEwMyA2MnoiLz48L3N2Zz4=)](#BPSR Auto Modules — Module Optimizer)
-
 
 ![Captura de pantalla de la aplicación](https://github.com/mrsnakke/gachaIMG/blob/main/img1.png?raw=true)
 
@@ -167,10 +166,6 @@ Sigue estos pasos para configurar y ejecutar el proyecto:
         ```bash
         .\venv\Scripts\activate
         ```
-    -   **En macOS/Linux**:
-        ```bash
-        source venv/bin/activate
-        ```
 
 3.  **Instalar dependencias**:
     Con el entorno virtual activado, instala las librerías de Python necesarias:
@@ -182,7 +177,7 @@ Sigue estos pasos para configurar y ejecutar el proyecto:
 ## Uso
 
 1.  **Ejecutar la aplicación**:
-    Once all dependencies are installed, you can start the application by running the main script:
+    Una vez instaladas todas las dependencias, puedes iniciar la aplicación ejecutando el script principal:
     ```bash
     python gui_app.py
     ```
@@ -212,14 +207,14 @@ Sigue estos pasos para configurar y ejecutar el proyecto:
 ## Créditos
 
 - Este proyecto es un fork que integra y adapta trabajo previo de otros autores.
-- Main credits:
-    - Fork based on: StarResonanceAutoMod — autor: fudiyangjin
+- Créditos principales:
+    - Fork basado en: StarResonanceAutoMod — autor: fudiyangjin
         https://github.com/fudiyangjin/StarResonanceAutoMod
-    - We also appreciate the complementary work of StarResonanceDamageCounter (dmlgzs):
+    - También agradecemos el trabajo complementario de StarResonanceDamageCounter (dmlgzs):
         https://github.com/dmlgzs/StarResonanceDamageCounter
 
-If you use this project, please respect the original licenses and attributions.
+Si utilizas este proyecto, por favor, respeta las licencias y atribuciones originales.
 
 ---
 
-**Disclaimer**: This tool is for learning and data analysis purposes only. It should not be used for activities that violate the game's terms of service. The user assumes the associated risks. The project author is not responsible for misuse by third parties. Make sure to comply with game and community rules and policies before using it.
+**Disclaimer**: Esta herramienta tiene fines de aprendizaje y análisis de datos únicamente. No debe ser utilizada para actividades que violen los términos de servicio del juego. El usuario asume los riesgos asociados. El autor del proyecto no se responsabiliza del mal uso por parte de terceros. Asegúrate de cumplir con las reglas y políticas del juego y de la comunidad antes de usarla.
