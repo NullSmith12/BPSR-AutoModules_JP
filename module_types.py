@@ -1,5 +1,5 @@
 """
-Module Definitions
+模组定义
 """
 
 from typing import Dict, List
@@ -8,20 +8,23 @@ from enum import Enum
 
 
 class ModuleType(Enum):
-    """Module Type Enum"""
+    """模组类型枚举"""
     BASIC_ATTACK = 5500101
     HIGH_PERFORMANCE_ATTACK = 5500102
     EXCELLENT_ATTACK = 5500103
+    EXCELLENT_ATTACK_PREFERRED = 5500104
     BASIC_HEALING = 5500201
     HIGH_PERFORMANCE_HEALING = 5500202
     EXCELLENT_HEALING = 5500203
+    EXCELLENT_HEALING_PREFERRED = 5500204
     BASIC_PROTECTION = 5500301
     HIGH_PERFORMANCE_PROTECTION = 5500302
     EXCELLENT_PROTECTION = 5500303
+    EXCELLENT_PROTECTION_PREFERRED = 5500304
 
 
 class ModuleAttrType(Enum):
-    """Module Attribute Type Enum"""
+    """模组属性类型枚举"""
     STRENGTH_BOOST = 1110
     AGILITY_BOOST = 1111
     INTELLIGENCE_BOOST = 1112
@@ -46,27 +49,30 @@ class ModuleAttrType(Enum):
 
 
 class ModuleCategory(Enum):
-    """Module Category Enum"""
+    """模组类型分类"""
     ATTACK = "Attack"
     GUARDIAN = "Guard" 
     SUPPORT = "Support"
     All = "All"
 
 
-# Module Name Mapping
+# 模组名称映射
 MODULE_NAMES = {
-    5500101: "Rare Attack",
-    5500102: "Epic Attack",
-    5500103: "Legendary Attack",
-    5500201: "Rare Support",
-    5500202: "Epic Support",
-    5500203: "Legendary Support",
-    5500301: "Rare Guard",
-    5500302: "Epic Guard",
-    5500303: "Legendary Guard",
+    ModuleType.BASIC_ATTACK.value: "Rare Attack",
+    ModuleType.HIGH_PERFORMANCE_ATTACK.value: "Epic Attack",
+    ModuleType.EXCELLENT_ATTACK.value: "Legendary Attack",
+    ModuleType.EXCELLENT_ATTACK_PREFERRED.value: "Legendary Attack-Preferred",
+    ModuleType.BASIC_HEALING.value: "Rare Support",
+    ModuleType.HIGH_PERFORMANCE_HEALING.value: "Epic Support",
+    ModuleType.EXCELLENT_HEALING.value: "Legendary Support",
+    ModuleType.EXCELLENT_HEALING_PREFERRED.value: "Legendary Support-Preferred",
+    ModuleType.BASIC_PROTECTION.value: "Rare Guard",
+    ModuleType.HIGH_PERFORMANCE_PROTECTION.value: "Epic Guard",
+    ModuleType.EXCELLENT_PROTECTION.value: "Legendary Guard",
+    ModuleType.EXCELLENT_PROTECTION_PREFERRED.value: "Legendary Guard-Preferred",
 }
 
-# Module Attribute Name Mapping
+# 模组属性名称映射
 MODULE_ATTR_NAMES = {
     ModuleAttrType.STRENGTH_BOOST.value: "Strength Boost",
     ModuleAttrType.AGILITY_BOOST.value: "Agility Boost",
@@ -91,25 +97,29 @@ MODULE_ATTR_NAMES = {
     ModuleAttrType.EXTREME_DESPERATE_GUARDIAN.value: "Final Protection",
 }
 
+# 模组属性id名称映射
+MODULE_ATTR_IDS = {name: attr_id for attr_id, name in MODULE_ATTR_NAMES.items()}
 
-# Module Type to Category Mapping
+# 模组类型到分类的映射
 MODULE_CATEGORY_MAP = {
     ModuleType.BASIC_ATTACK.value: ModuleCategory.ATTACK,
     ModuleType.HIGH_PERFORMANCE_ATTACK.value: ModuleCategory.ATTACK,
     ModuleType.EXCELLENT_ATTACK.value: ModuleCategory.ATTACK, 
+    ModuleType.EXCELLENT_ATTACK_PREFERRED.value: ModuleCategory.ATTACK,
     ModuleType.BASIC_PROTECTION.value: ModuleCategory.GUARDIAN,
     ModuleType.HIGH_PERFORMANCE_PROTECTION.value: ModuleCategory.GUARDIAN,
     ModuleType.EXCELLENT_PROTECTION.value: ModuleCategory.GUARDIAN,
+    ModuleType.EXCELLENT_PROTECTION_PREFERRED.value: ModuleCategory.GUARDIAN,
     ModuleType.BASIC_HEALING.value: ModuleCategory.SUPPORT,
     ModuleType.HIGH_PERFORMANCE_HEALING.value: ModuleCategory.SUPPORT,
     ModuleType.EXCELLENT_HEALING.value: ModuleCategory.SUPPORT,
+    ModuleType.EXCELLENT_HEALING_PREFERRED.value: ModuleCategory.SUPPORT,
 }
 
-# Attribute Thresholds and Effect Levels
+# 属性阈值和效果等级
 ATTR_THRESHOLDS = [1, 4, 8, 12, 16, 20]
 
-
-# Basic Attribute Power Mapping
+# 基础词条战力映射
 BASIC_ATTR_POWER_MAP = {
     1: 7,
     2: 14,
@@ -119,7 +129,7 @@ BASIC_ATTR_POWER_MAP = {
     6: 254
 }
 
-# Special Attribute Power Mapping
+# 特殊词条战力映射
 SPECIAL_ATTR_POWER_MAP = {
     1: 14,
     2: 29,
@@ -129,7 +139,7 @@ SPECIAL_ATTR_POWER_MAP = {
     6: 448
 }
 
-# Total Attribute Value Power Mapping
+# 模组总属性值战力映射
 TOTAL_ATTR_POWER_MAP = {
     0: 0, 1: 5, 2: 11, 3: 17, 4: 23, 5: 29, 6: 34, 7: 40, 8: 46,
     18: 104, 19: 110, 20: 116, 21: 122, 22: 128, 23: 133, 24: 139, 25: 145,
@@ -146,7 +156,7 @@ TOTAL_ATTR_POWER_MAP = {
     106: 617, 113: 658, 114: 664, 115: 669, 116: 675, 117: 681, 118: 687, 119: 693, 120: 699
 }
 
-# Basic Attribute ID List
+# 基础词条ID列表
 BASIC_ATTR_IDS = {
     ModuleAttrType.STRENGTH_BOOST.value,
     ModuleAttrType.AGILITY_BOOST.value,
@@ -163,7 +173,7 @@ BASIC_ATTR_IDS = {
     ModuleAttrType.PHYSICAL_RESISTANCE.value
 }
 
-# Special Attribute ID List
+# 特殊词条ID列表
 SPECIAL_ATTR_IDS = {
     ModuleAttrType.EXTREME_DAMAGE_STACK.value,
     ModuleAttrType.EXTREME_FLEXIBLE_MOVEMENT.value,
@@ -175,7 +185,7 @@ SPECIAL_ATTR_IDS = {
     ModuleAttrType.EXTREME_DESPERATE_GUARDIAN.value
 }
 
-# Attribute Name to Type Mapping
+# 属性名称到类型的映射
 ATTR_NAME_TYPE_MAP = {
     "Strength Boost": "basic",
     "Agility Boost": "basic", 
@@ -201,10 +211,9 @@ ATTR_NAME_TYPE_MAP = {
 }
 
 
-
 @dataclass
 class ModulePart:
-    """Module Part Information"""
+    """模组部件信息"""
     id: int
     name: str
     value: int
@@ -212,10 +221,10 @@ class ModulePart:
 
 @dataclass(eq=True)
 class ModuleInfo:
-    """Module Information"""
+    """模组信息"""
     name: str
     config_id: int
-    uuid: str
+    uuid: int
     quality: int
     parts: List[ModulePart]
     

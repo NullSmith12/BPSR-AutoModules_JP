@@ -45,7 +45,7 @@ class App(ctk.CTk):
         self.title("BPSR Module Optimizer by: MrSnake")
         self.iconbitmap("icon.ico")
         self.attributes("-topmost", True)
-        self.geometry("1300x800")
+        self.geometry("1280x1080")
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         # --- Load Icon Font ---
@@ -85,18 +85,32 @@ class App(ctk.CTk):
                 "dynamic_instruction_1": "Before pressing the ",
                 "dynamic_instruction_2": " button, move your character to a location with few players around.",
                 "waiting_for_modules": "Waiting for modules to be combined",
-                "change_channel_instruction": "Change channels in-game to start processing modules."
+                "change_channel_instruction": "Change channels in-game to start processing modules.",
+                "refilter": "\uf002 Refilter",
+                "save_preset_title": "Save Preset",
+                "save_preset_prompt": "Enter a name for the current attribute selection:",
+                "delete_preset_title": "Delete Preset",
+                "delete_preset_prompt": "Are you sure you want to delete the preset '{preset_name}'?",
+                "save": "💾 Save",
+                "delete": "🗑️ Delete"
             },
             "es": {
                 "select_interface": "Selecciona la Interfaz de Red:",
                 "select_module_type": "Selecciona el Tipo de Módulo:",
-                "filter_attributes": "Filtrar Atributos (separados por espacio):",
+                "filter_attributes": "Filtrar Atributos (separados por coma):",
                 "select_preset": "Seleccionar Atributos de Filtro Predefinidos:",
                 "recommended_combos": "Las combinaciones recomendadas solo mostrarán los atributos filtrados anteriormente, se recomienda rellenar todos los atributos tolerables.",
                 "dynamic_instruction_1": "Antes de presionar el botón ",
                 "dynamic_instruction_2": " mueve tu personaje a un lugar con pocos jugadores a tu alrededor.",
                 "waiting_for_modules": "Espera a que combine los Modulos",
-                "change_channel_instruction": "Cambia de canal dentro del juego para comenzar a procesar módulos."
+                "change_channel_instruction": "Cambia de canal dentro del juego para comenzar a procesar módulos.",
+                "refilter": "\uf002 Refiltrar",
+                "save_preset_title": "Guardar Preset",
+                "save_preset_prompt": "Introduce un nombre para la selección de atributos actual:",
+                "delete_preset_title": "Eliminar Preset",
+                "delete_preset_prompt": "¿Estás seguro de que quieres eliminar el preset '{preset_name}'?",
+                "save": "💾 Guardar",
+                "delete": "🗑️ Eliminar"
             }
         }
         self.current_language = "en"
@@ -105,7 +119,7 @@ class App(ctk.CTk):
         title_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         title_frame.grid(row=0, column=0, pady=(10, 5), sticky="w", padx=10)
 
-        app_icon_img = ctk.CTkImage(Image.open("icon.png"), size=(120, 120))
+        app_icon_img = ctk.CTkImage(Image.open("icon.png"), size=(40, 40))
         app_icon = ctk.CTkLabel(title_frame, image=app_icon_img, text="")
         app_icon.pack(side="left", padx=(0, 10))
 
@@ -136,72 +150,97 @@ class App(ctk.CTk):
         x_icon.pack(side="left", padx=5)
         x_icon.bind("<Button-1>", lambda e: webbrowser.open_new("https://x.com/MrSnakeVT"))
 
-        self.modules_button = ctk.CTkButton(self.main_frame, text="Config", command=self.toggle_filters)
-        self.modules_button.grid(row=1, column=0, columnspan=2, pady=5)
-
-        # --- Filter Frame (initially hidden) ---
-        self.filters_frame = ctk.CTkFrame(self.main_frame)
-        self.filters_frame.grid(row=2, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
-        self.filters_frame.grid_remove()
+        # --- Filter Frame (initially visible) ---
+        self.filters_frame = ctk.CTkFrame(self.main_frame, fg_color="#495057")
+        self.filters_frame.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
+        self.filters_frame.grid_columnconfigure(0, weight=1)
         self.filters_frame.grid_columnconfigure(1, weight=1)
+        self.filters_frame.grid_columnconfigure(2, weight=1)
+        self.filters_frame.grid_columnconfigure(3, weight=1)
+
+        # Column 0
+        self.label_category = ctk.CTkLabel(self.filters_frame, text="Select Module Type:")
+        self.label_category.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        self.category_menu = ctk.CTkOptionMenu(self.filters_frame, values=["All", "Attack", "Guard", "Support"])
+        self.category_menu.grid(row=0, column=1, padx=10, pady=5, sticky="ew")
+        self.category_menu.set("All")
+        self.category_menu.configure(state="normal") # Ensure it's enabled initially
 
         self.label_interface = ctk.CTkLabel(self.filters_frame, text="Select Network Interface:")
-        self.label_interface.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        self.label_interface.grid(row=0, column=2, padx=10, pady=5, sticky="w")
         self.interface_menu = ctk.CTkOptionMenu(self.filters_frame, values=list(self.interface_map.keys()))
-        self.interface_menu.grid(row=0, column=1, padx=10, pady=5, sticky="ew")
+        self.interface_menu.grid(row=0, column=3, padx=10, pady=5, sticky="ew")
 
-        self.label_category = ctk.CTkLabel(self.filters_frame, text="Select Module Type:")
-        self.label_category.grid(row=1, column=0, padx=10, pady=5, sticky="w")
-        self.category_menu = ctk.CTkOptionMenu(self.filters_frame, values=["All", "Attack", "Guard", "Support"])
-        self.category_menu.grid(row=1, column=1, padx=10, pady=5, sticky="ew")
-        self.category_menu.set("All")
+        # --- Presets Frame ---
+        # --- Presets Frame ---
+        self.presets_frame = ctk.CTkFrame(self.filters_frame, fg_color="#495057")
+        self.presets_frame.grid(row=1, column=0, columnspan=4, padx=10, pady=(10,0), sticky="ew")
+        self.presets_frame.grid_columnconfigure(0, weight=0)
+        self.presets_frame.grid_columnconfigure(1, weight=1)
+        self.presets_frame.grid_columnconfigure(2, weight=0)
+        self.presets_frame.grid_columnconfigure(3, weight=0)
 
-        self.label_attributes = ctk.CTkLabel(self.filters_frame, text="Filter Attributes (space separated):")
-        self.label_attributes.grid(row=2, column=0, padx=10, pady=5, sticky="w")
-        self.attributes_entry = ctk.CTkEntry(self.filters_frame, placeholder_text="Enter manually or select a preset below, leave blank to not filter")
-        self.attributes_entry.grid(row=2, column=1, padx=10, pady=5, sticky="ew")
+        self.label_presets = ctk.CTkLabel(self.presets_frame, text="Select Preset:")
+        self.label_presets.grid(row=0, column=0, padx=(10, 5), pady=5, sticky="w")
 
-        self.label_recommended = ctk.CTkLabel(self.filters_frame, text="Recommended combinations will only show the above filtered attributes, it is recommended to fill in all tolerable attributes", wraplength=400, justify="left")
-        self.label_recommended.grid(row=3, column=1, padx=10, pady=5, sticky="w")
+        self.presets_menu = ctk.CTkOptionMenu(self.presets_frame, command=self.apply_preset)
+        self.presets_menu.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
-        self.label_presets = ctk.CTkLabel(self.filters_frame, text="Select Preset Filter Attributes:")
-        self.label_presets.grid(row=4, column=0, padx=10, pady=5, sticky="w")
+        self.save_preset_button = ctk.CTkButton(self.presets_frame, text="", command=self.save_preset, width=80, corner_radius=8, fg_color="#2C2E33", border_color="#373a40", border_width=1)
+        self.save_preset_button.grid(row=0, column=2, padx=5, pady=5)
+
+        self.delete_preset_button = ctk.CTkButton(self.presets_frame, text="", command=self.delete_preset, width=80, corner_radius=8, fg_color="#2C2E33", border_color="#373a40", border_width=1)
+        self.delete_preset_button.grid(row=0, column=3, padx=5, pady=5)
+
+        self.attributes_buttons_frame = ctk.CTkFrame(self.filters_frame)
+        self.attributes_buttons_frame.grid(row=2, column=0, columnspan=4, padx=10, pady=10, sticky="ew")
+
+        self.all_attributes = [
+            "DMG Stack", "Agile", "Life Condense", "First Aid", "Life Wave", "Life Steal", 
+            "Team Luck & Crit", "Final Protection", "Strength Boost", "Agility Boost", 
+            "Intellect Boost", "Special Attack", "Elite Strike", "Healing Boost", 
+            "Healing Enhance", "Cast Focus", "Attack SPD", "Crit Focus", "Luck Focus", 
+            "Resistance", "Armor"
+        ]
         
-        self.attribute_presets: Dict[str, str] = {
-            "Manual Input / Clear": "",
-            "Shield Knight": "Magic Resist Physical Resist Crit Focus",
-            "Stormblade": "Agility Boost Special Attack Elite Strike Crit Focus",
-            "Frost Mage": "Intellect Boost Special Attack Elite Strike Cast Focus Crit Focus Luck Focus",
-            "Wind Knight": "Strength Boost Special Attack Elite Strike Attack SPD Focus",
-            "Verdant Oracle": "Intellect Boost Special Healing Boost Healing Enhance Luck Focus",
-            "Heavy Guardian": "Strength Boost Magic Resist Physical Resist Crit Focus Luck Focus",
-            "Marksman": "Agility Boost Special Attack Elite Strike Attack SPD Focus",
-            "Beat Performer": "Intellect Boost Special Attack Healing Boost Cast Focus Attack SPD Luck Focus", # Corrected
-            "All": "DMG Stack Agile Life Condense First Aid Life Wave Life Steal Team Luck & Crit Final Protection Strength Boost Agility Boost Intellect Boost Special Attack Elite Strike Healing Boost Healing Enhance Cast Focus Attack SPD Crit Focus Luck Focus Magic Resist Physical Resist",
-            "Damage Class": "Strength Boost Agility Boost Intellect Boost Special Attack Elite Strike Cast Focus Attack SPD Crit Focus Luck Focus",
-            "Defense/Support": "Strength Boost Agility Boost Intellect Boost Special Healing Boost Healing Enhance Cast Focus Attack SPD Crit Focus Luck Focus Magic Resist Physical Resist",
-        }
+        self.attribute_buttons: Dict[str, ctk.CTkButton] = {}
+        self.selected_attributes = set()
 
-        self.preset_menu = ctk.CTkOptionMenu(
-            self.filters_frame, values=list(self.attribute_presets.keys()),
-            command=self.update_attributes_from_preset
+        # --- Create "All" button ---
+        all_button = ctk.CTkButton(
+            self.attributes_buttons_frame,
+            text="All",
+            command=self.toggle_all_attributes,
+            fg_color="#2C2E33",
+            border_color="#373a40",
+            border_width=1,
+            corner_radius=8
         )
-        self.preset_menu.grid(row=4, column=1, padx=10, pady=5, sticky="ew")
+        all_button.grid(row=0, column=0, padx=5, pady=5)
+        self.attribute_buttons["All"] = all_button
 
-        self.preset_buttons_frame = ctk.CTkFrame(self.filters_frame, fg_color="transparent")
-        self.preset_buttons_frame.grid(row=5, column=1, padx=10, pady=5, sticky="w")
-
-        self.save_preset_button = ctk.CTkButton(self.preset_buttons_frame, text="Save Preset", command=self.save_custom_preset, width=120)
-        self.save_preset_button.pack(side="left", padx=(0, 10))
-
-        self.delete_preset_button = ctk.CTkButton(self.preset_buttons_frame, text="Delete Preset", command=self.delete_custom_preset, width=120)
-        self.delete_preset_button.pack(side="left")
-
-        self.load_custom_presets()
-        self.preset_menu.set("Manual Input / Clear")
+        # --- Create attribute buttons ---
+        row, col = 0, 1
+        for attr in self.all_attributes:
+            if col > 6:  # Adjust number of columns as needed
+                col = 0
+                row += 1
+            
+            button = ctk.CTkButton(
+                self.attributes_buttons_frame,
+                text=attr,
+                command=lambda a=attr: self.toggle_attribute(a),
+                fg_color="#2C2E33",
+                border_color="#373a40",
+                border_width=1,
+                corner_radius=8
+            )
+            button.grid(row=row, column=col, padx=5, pady=5)
+            self.attribute_buttons[attr] = button
+            col += 1
 
         self.control_frame = ctk.CTkFrame(self.main_frame)
-        self.control_frame.grid(row=5, column=0, columnspan=2, pady=10)
+        self.control_frame.grid(row=4, column=0, columnspan=2, pady=10)
 
         play_icon = ctk.CTkImage(Image.open("Icons/play.png"), size=(16, 16))
         self.start_button = ctk.CTkButton(self.control_frame, text="Start Monitoring", image=play_icon, command=self.start_monitoring)
@@ -211,7 +250,7 @@ class App(ctk.CTk):
         self.stop_button = ctk.CTkButton(self.control_frame, text="Stop Monitoring", image=stop_icon, command=self.stop_monitoring, state="disabled")
         self.stop_button.pack(side="left", padx=10)
         
-        self.rescreen_button = ctk.CTkButton(self.control_frame, text="\uf002  Rescreen", command=self.rescreen_results, state="disabled", font=self.fa_font)
+        self.rescreen_button = ctk.CTkButton(self.control_frame, text="", command=self.rescreen_results, state="disabled", font=self.fa_font)
         self.rescreen_button.pack(side="left", padx=10)
 
         # Button to toggle the console
@@ -220,7 +259,7 @@ class App(ctk.CTk):
 
         # --- Dynamic Instructions ---
         self.instruction_frame = ctk.CTkFrame(self.main_frame, fg_color="#2B2B2B", corner_radius=10)
-        self.instruction_frame.grid(row=6, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
+        self.instruction_frame.grid(row=5, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
         
         self.instruction_icon = ctk.CTkLabel(self.instruction_frame, text="⚠️", font=("Segoe UI Emoji", 20), text_color="#FFCC00") # Yellow warning
         self.instruction_icon.pack(side="left", padx=(10, 5), pady=5)
@@ -237,7 +276,7 @@ class App(ctk.CTk):
 
         # --- Distribution Filter ---
         self.dist_filter_frame = ctk.CTkFrame(self.main_frame)
-        self.dist_filter_frame.grid(row=7, column=0, columnspan=2, padx=10, pady=(5, 0), sticky="ew")
+        self.dist_filter_frame.grid(row=6, column=0, columnspan=2, padx=10, pady=(5, 0), sticky="ew")
         self.dist_filter_frame.grid_remove() # Hide initially
 
         self.label_dist_filter = ctk.CTkLabel(self.dist_filter_frame, text="Attr. Distribution:")
@@ -250,7 +289,8 @@ class App(ctk.CTk):
                 self.dist_filter_frame,
                 text=f,
                 command=lambda name=f: self.set_distribution_filter(name),
-                width=80
+                width=70, # Ligeramente menos largo
+                corner_radius=8 # Más redondeado
             )
             btn.pack(side="left", padx=5)
         self.dist_filter_buttons[f] = btn
@@ -287,14 +327,14 @@ class App(ctk.CTk):
 
         # --- Results Display ---
         self.results_frame = ctk.CTkScrollableFrame(self.main_frame, label_text="Combinations")
-        self.results_frame.grid(row=8, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+        self.results_frame.grid(row=7, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
         self.results_frame.grid_columnconfigure(0, weight=1)
         self.results_frame.grid_columnconfigure(1, weight=1)
-        self.main_frame.grid_rowconfigure(8, weight=1) # Allow results frame to expand
+        self.main_frame.grid_rowconfigure(7, weight=1) # Allow results frame to expand
 
         # --- Pagination Controls ---
         self.pagination_frame = ctk.CTkFrame(self.main_frame)
-        self.pagination_frame.grid(row=9, column=0, columnspan=2, pady=(5, 0), sticky="ew")
+        self.pagination_frame.grid(row=8, column=0, columnspan=2, pady=(5, 0), sticky="ew")
         self.pagination_frame.grid_columnconfigure((0, 2), weight=1) # Center the label
         self.pagination_frame.grid_remove() # Hide initially
 
@@ -322,6 +362,10 @@ class App(ctk.CTk):
         self.instruction_animation_chars = ["", ".", "..", "..."]
         self.instruction_animation_index = 0
 
+        self.presets = {}
+        self.load_presets()
+        self.update_presets_menu()
+
         self.after(100, self.poll_queues)
         self.update_dist_filter_buttons() # Set initial button state
         self.change_language("English") # Set default language
@@ -332,9 +376,10 @@ class App(ctk.CTk):
 
         self.label_interface.configure(text=lang_dict["select_interface"])
         self.label_category.configure(text=lang_dict["select_module_type"])
-        self.label_attributes.configure(text=lang_dict["filter_attributes"])
-        self.label_presets.configure(text=lang_dict["select_preset"])
-        self.label_recommended.configure(text=lang_dict["recommended_combos"])
+        self.rescreen_button.configure(text=lang_dict["refilter"])
+        self.label_presets.configure(text=lang_dict.get("select_preset", "Select Preset:"))
+        self.save_preset_button.configure(text=lang_dict.get("save", "💾 Save"))
+        self.delete_preset_button.configure(text=lang_dict.get("delete", "🗑️ Delete"))
         
         self.update_dynamic_instruction()
         
@@ -440,89 +485,35 @@ class App(ctk.CTk):
         else:
             self.filters_frame.grid()
 
-    def update_attributes_from_preset(self, selection: str):
-        preset_string = self.attribute_presets.get(selection, "")
-        self.attributes_entry.delete(0, "end")
-        self.attributes_entry.insert(0, preset_string)
+    def toggle_attribute(self, attribute_name: str):
+        """Toggles the selection state of an attribute button."""
+        if attribute_name in self.selected_attributes:
+            self.selected_attributes.remove(attribute_name)
+            self.attribute_buttons[attribute_name].configure(fg_color="#2C2E33")
+        else:
+            self.selected_attributes.add(attribute_name)
+            self.attribute_buttons[attribute_name].configure(fg_color="#1F6AA5") # Blue
 
-    def load_custom_presets(self):
-        """Loads custom presets from a JSON file and updates the UI."""
-        try:
-            if os.path.exists("custom_presets.json"):
-                with open("custom_presets.json", "r") as f:
-                    custom_presets = json.load(f)
-                    self.attribute_presets.update(custom_presets)
-        except (json.JSONDecodeError, IOError) as e:
-            logging.error(f"Error loading custom presets: {e}")
-        self.update_preset_menu()
+        # Update "All" button state
+        if len(self.selected_attributes) == len(self.all_attributes):
+            self.attribute_buttons["All"].configure(fg_color="#1F6AA5")
+        else:
+            self.attribute_buttons["All"].configure(fg_color="#2C2E33")
 
-    def save_custom_preset(self):
-        """Saves the current attributes as a new preset."""
-        attributes_str = self.attributes_entry.get().strip()
-        if not attributes_str:
-            logging.warning("Cannot save an empty preset.")
-            return
-
-        preset_name = simpledialog.askstring("Save Preset", "Enter a name for this preset:")
-        if preset_name and preset_name not in self.attribute_presets:
-            custom_presets = {}
-            if os.path.exists("custom_presets.json"):
-                with open("custom_presets.json", "r") as f:
-                    try:
-                        custom_presets = json.load(f)
-                    except json.JSONDecodeError:
-                        pass # Overwrite if file is corrupt
-            
-            custom_presets[preset_name] = attributes_str
-            self.attribute_presets[preset_name] = attributes_str
-            
-            with open("custom_presets.json", "w") as f:
-                json.dump(custom_presets, f, indent=4)
-            
-            self.update_preset_menu()
-            self.preset_menu.set(preset_name)
-            logging.info(f"Preset '{preset_name}' saved.")
-        elif preset_name:
-            logging.warning(f"Preset name '{preset_name}' already exists.")
-
-    def delete_custom_preset(self):
-        """Deletes a selected custom preset."""
-        selection = self.preset_menu.get()
-        
-        # Default presets that cannot be deleted
-        default_presets = [
-            "Manual Input / Clear", "Shield Knight", "Stormblade", "Frost Mage",
-            "Wind Knight", "Verdant Oracle", "Heavy Guardian", "Marksman",
-            "Beat Performer", "All", "Damage Class", "Defense/Support"
-        ]
-
-        if selection in default_presets:
-            logging.warning(f"Cannot delete a default preset: {selection}")
-            return
-
-        if selection in self.attribute_presets:
-            del self.attribute_presets[selection]
-            
-            custom_presets = {}
-            if os.path.exists("custom_presets.json"):
-                with open("custom_presets.json", "r") as f:
-                    try:
-                        custom_presets = json.load(f)
-                        if selection in custom_presets:
-                            del custom_presets[selection]
-                    except json.JSONDecodeError as e:
-                        logging.error(f"Could not update presets file: {e}")
-
-            with open("custom_presets.json", "w") as f:
-                json.dump(custom_presets, f, indent=4)
-
-            self.update_preset_menu()
-            self.preset_menu.set("Manual Input / Clear")
-            logging.info(f"Preset '{selection}' deleted.")
-
-    def update_preset_menu(self):
-        """Updates the values in the preset option menu."""
-        self.preset_menu.configure(values=list(self.attribute_presets.keys()))
+    def toggle_all_attributes(self):
+        """Toggles all attributes on or off."""
+        if len(self.selected_attributes) == len(self.all_attributes):
+            # If all are selected, deselect all
+            self.selected_attributes.clear()
+            for attr, button in self.attribute_buttons.items():
+                button.configure(fg_color="#2C2E33")
+        else:
+            # If not all are selected, select all
+            self.selected_attributes.update(self.all_attributes)
+            for attr, button in self.attribute_buttons.items():
+                if attr != "All":
+                    button.configure(fg_color="#1F6AA5")
+            self.attribute_buttons["All"].configure(fg_color="#1F6AA5")
 
     def poll_queues(self):
         # Merge processing of two queues
@@ -823,6 +814,75 @@ class App(ctk.CTk):
             self.after_cancel(self.instruction_animation_job)
             self.instruction_animation_job = None
 
+    def load_presets(self):
+        try:
+            with open("custom_presets.json", "r") as f:
+                self.presets = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            self.presets = {"Manual Input / Clear": ""} # Default
+            self.save_presets_to_file()
+
+    def save_presets_to_file(self):
+        with open("custom_presets.json", "w") as f:
+            json.dump(self.presets, f, indent=4)
+
+    def update_presets_menu(self):
+        self.presets_menu.configure(values=list(self.presets.keys()))
+        self.presets_menu.set("Manual Input / Clear")
+
+    def apply_preset(self, preset_name: str):
+        attributes_str = self.presets.get(preset_name, "")
+        preset_attributes = set()
+        if attributes_str:
+            # Split the string by commas and then strip whitespace from each attribute
+            temp_attributes = [attr.strip() for attr in attributes_str.split(",") if attr.strip()]
+            for attr in temp_attributes:
+                if attr in self.all_attributes:
+                    preset_attributes.add(attr)
+
+        # Deselect all currently selected attributes
+        for attr in list(self.selected_attributes):
+            if attr in self.attribute_buttons:
+                self.toggle_attribute(attr)
+
+        # Select attributes from the preset
+        for attr in preset_attributes:
+            if attr in self.attribute_buttons:
+                self.toggle_attribute(attr)
+
+    def save_preset(self):
+        lang_dict = self.translations[self.current_language]
+        title = lang_dict.get("save_preset_title", "Save Preset")
+        prompt = lang_dict.get("save_preset_prompt", "Enter a name for the current attribute selection:")
+        
+        dialog = ctk.CTkInputDialog(text=prompt, title=title)
+        self.attributes("-topmost", False)
+        preset_name = dialog.get_input()
+        self.attributes("-topmost", True)
+
+        if preset_name and preset_name not in self.presets:
+            # Join attributes with a comma and space
+            current_attributes = ", ".join(sorted(list(self.selected_attributes)))
+            self.presets[preset_name] = current_attributes
+            self.save_presets_to_file()
+            self.update_presets_menu()
+            self.presets_menu.set(preset_name)
+
+    def delete_preset(self):
+        preset_name = self.presets_menu.get()
+        if preset_name == "Manual Input / Clear":
+            return # Cannot delete the default
+        
+        lang_dict = self.translations[self.current_language]
+        title = lang_dict.get("delete_preset_title", "Delete Preset")
+        prompt = lang_dict.get("delete_preset_prompt", "Are you sure you want to delete the preset '{preset_name}'?").format(preset_name=preset_name)
+
+        if tkinter.messagebox.askyesno(title, prompt):
+            if preset_name in self.presets:
+                del self.presets[preset_name]
+                self.save_presets_to_file()
+                self.update_presets_menu()
+
     def start_monitoring(self):
         selected_interface_display = self.interface_menu.get()
         if not selected_interface_display:
@@ -831,8 +891,7 @@ class App(ctk.CTk):
         
         interface_name = self.interface_map[selected_interface_display]
         category = self.category_menu.get()
-        attributes_str = self.attributes_entry.get().strip()
-        attributes = attributes_str.split() if attributes_str else []
+        attributes = list(self.selected_attributes)
 
         self.log_textbox.configure(state="normal")
         self.log_textbox.delete("1.0", "end")
@@ -871,8 +930,6 @@ class App(ctk.CTk):
         self.stop_button.configure(state="normal")
         self.interface_menu.configure(state="disabled")
         self.category_menu.configure(state="normal")
-        self.attributes_entry.configure(state="normal")
-        self.preset_menu.configure(state="normal")
         self.rescreen_button.configure(state="disabled")
         self.status_label.configure(text="Status: Monitoring game data...")
 
@@ -916,8 +973,7 @@ class App(ctk.CTk):
         self.start_animation()
         
         category = self.category_menu.get()
-        attributes_str = self.attributes_entry.get().strip()
-        attributes = attributes_str.split() if attributes_str else []
+        attributes = list(self.selected_attributes)
         
         logging.info("=== User requested rescreening with new conditions... ===")
         

@@ -193,14 +193,14 @@ class ModuleOptimizer:
         self.logger = logger
         self._result_log_file = None
         self.ga_params = {
-            'population_size': 100, 'generations': 40, 'mutation_rate': 0.1,
+            'population_size': 150, 'generations': 50, 'mutation_rate': 0.1,
             'crossover_rate': 0.8, 'elitism_rate': 0.1, 'tournament_size': 5,
             'local_search_rate': 0.3,
         }
         self.num_campaigns = max(1, os.cpu_count() - 1)
         self.quality_threshold = 12
-        self.prefilter_top_n_per_attr = 30
-        self.prefilter_top_n_total_value = 50
+        self.prefilter_top_n_per_attr = 60
+        self.prefilter_top_n_total_value = 100
 
     def _get_current_log_file(self) -> Optional[str]:
         try:
@@ -224,19 +224,31 @@ class ModuleOptimizer:
     def get_module_category(self, module: ModuleInfo) -> ModuleCategory:
         return MODULE_CATEGORY_MAP.get(module.config_id, ModuleCategory.ATTACK)
 
-    def prefilter_modules(self, modules: List[ModuleInfo]) -> List[ModuleInfo]:
-        self.logger.info(f"开始预筛选，原始模组数量: {len(modules)}")
-        if not modules: return []
-        candidate_modules, attr_modules = set(), {p.name: [] for m in modules for p in m.parts}
+    def prefilter_modules(self, modules: List[ModuleInfo], prioritized_attrs: Optional[List[str]] = None) -> List[ModuleInfo]:
+        self.logger.info(f"Starting pre-filtering, original number of modules: {len(modules)}")
+        if not modules:
+            return []
+
+        # First, filter by total attribute value to get a base set of high-quality modules
+        sorted_by_total_value = sorted(modules, key=lambda m: sum(p.value for p in m.parts), reverse=True)
+        top_modules = set(sorted_by_total_value[:self.prefilter_top_n_total_value])
+
+        # Then, get the top modules for each attribute
+        attr_modules = {p.name: [] for m in modules for p in m.parts}
         for module in modules:
-            for part in module.parts: attr_modules[part.name].append((module, part.value))
+            for part in module.parts:
+                attr_modules[part.name].append((module, part.value))
+
+        candidate_modules = set(top_modules)
         for attr_name, module_values in attr_modules.items():
+            # If prioritized_attrs is specified, only consider those attributes for this part of the filtering
+            if prioritized_attrs and attr_name not in prioritized_attrs:
+                continue
             sorted_by_attr = sorted(module_values, key=lambda x: x[1], reverse=True)
             candidate_modules.update(item[0] for item in sorted_by_attr[:self.prefilter_top_n_per_attr])
-        sorted_by_total_value = sorted(modules, key=lambda m: sum(p.value for p in m.parts), reverse=True)
-        candidate_modules.update(sorted_by_total_value[:self.prefilter_top_n_total_value])
+
         filtered_modules = list(candidate_modules)
-        self.logger.info(f"预筛选完成，候选池数量: {len(filtered_modules)}")
+        self.logger.info(f"Pre-filtering complete, candidate pool size: {len(filtered_modules)}")
         return filtered_modules
 
     # --- CORRECTED METHOD ---
@@ -297,14 +309,14 @@ class ModuleOptimizer:
         module_pool = modules if category == ModuleCategory.All else [m for m in modules if self.get_module_category(m) == category]
         
         if prioritized_attrs:
-            self.logger.info(f"Applying strict filtering: only keeping modules where all attributes are in the {prioritized_attrs} list.")
+            self.logger.info(f"Applying inclusive filtering: keeping modules that have at least one of the desired attributes: {prioritized_attrs}.")
             original_count = len(module_pool)
             prioritized_set = set(prioritized_attrs)
-            module_pool = [m for m in module_pool if all(p.name in prioritized_set for p in m.parts)]
-            self.logger.info(f"Strict filtering completed: module count reduced from {original_count} to {len(module_pool)}.")
+            module_pool = [m for m in module_pool if any(p.name in prioritized_set for p in m.parts)]
+            self.logger.info(f"Inclusive filtering completed: module count reduced from {original_count} to {len(module_pool)}.")
 
         if not self._preliminary_check(module_pool, prioritized_attrs): return []
-        candidate_modules = self.prefilter_modules(module_pool)
+        candidate_modules = self.prefilter_modules(module_pool, prioritized_attrs)
         if len(candidate_modules) < 4:
             self.logger.warning("Less than 4 modules after pre-filtering, unable to form valid combinations.")
             return []
