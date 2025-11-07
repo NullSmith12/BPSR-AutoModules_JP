@@ -1,8 +1,9 @@
 <!-- Botón para saltar a la versión en Español -->
-[![Español](https://img.shields.io/badge/Espa%C3%B1ol-red?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3NTAgNTAwIj48cGF0aCBmaWxsPSIjY2YxNDJiIiBkPSJNMCAwaDc1MHY1MDBIMHoiLz48cGF0aCBmaWxsPSIjZmNkZDA3IiBkPSJNMCAxMjVoNzUwdjI1MEgwVjEyNXoiLz48cGF0aCBmaWxsPSIjMDA0MzQ2IiBkPSJNMCAwYzI3LjYxNCAwIDU1LjIyOCAxMS4wNDUgNzUuNzU3IDMwLjU4N0wxMjUgNzUuNzU3VjBIMHoiLz48cGF0aCBmaWxsPSIjMDA0MzQ2IiBkPSJNMCA1MDBjMjcuNjE0IDAgNTUuMjI4LTExLjA0NSA3NS43NTctMzAuNTg3TDEyNSA0MjQuMjQzVjUwMEgwWiIvPjxwYXRoIGZpbGw9IiMwMDQzNDYiIGQ9Ik03NTAgMGMtMjcuNjE0IDAtNTUuMjI4IDExLjA0NS03NS43NTcgMzAuNTg3TDYyNSA3NS43NTdWMDBINzUwWiIvPjxwYXRoIGZpbGw9IiMwMDQzNDYiIGQ9Ik03NTAgNTAwYy0yNy42MTQgMC01NS4yMjgtMTEuMDQ1LTc1Ljc1Ny0zMC41ODdMNjI1IDQyNC4yNDNWNTAwSDc1MFoiLz48Y2lyY2xlIGN4PSIzNzUiIGN5PSIyNTAiIHI9IjgwIiBmaWxsPSIjZmNkZDA3Ii8+PHBhdGggZmlsbD0iI2JkM2Q0YyIgZD0iTTM3NSAxNzBjLTQ0LjE4MyAwLTgwIDM1LjgyLTgwIDgwczM1LjgyIDgwIDgwIDgwIDgwLTM1LjgyIDgwLTgwLTM1LjgyLTgwLTgwLTgweiIvPjxwYXRoIGZpbGw9IiNmZmYiIGQ9M00zNzUgMTkwYzMzLjEzNyAwIDYwIDI2Ljg2MyA2MCA2MHMtMjYuODYzIDYwLTYwIDYwLTYwLTI2Ljg2My02MC02MCAyNi44NjMtNjAgNjAtNjB6Ii8+PHBhdGggZmlsbD0iI2JkM2Q0YyIgZD0iTTM3NSAyMDBjMjcuNjE0IDAgNTAtMjIuMzg2IDUwLTUwcy0yMi4zODYtNTAtNTAtNTAtNTAtMjIuMzg2LTUwLTUwIDIyLjM4Ni01MCA1MC01MHoiLz48cGF0aCBmaWxsPSIjZmNkZDA3IiBkPSJNMzU1IDI1MGgyMHYyMGgtMjB6TTM2NSAyMzBoMjB2MjBoLTIwem0xMC0yMGgyMHYyMGgtMjB6TTM3NSAyMjBoMjB2MjBoLTIwem0xMC0yMGgyMHYyMGgtMjB6Ii8+PC9zdmc+)](#spanish-version)
+[![Español](https://img.shields.io/badge/Español%20🇪🇸-C60B1E?style=for-the-badge)](#spanish-version)
 
 <a id="english-version"></a>
 # ✨ BPSR Auto Modules — Module Optimizer
+![Application Screenshot](https://github.com/mrsnakke/gachaIMG/blob/main/CAP2.png?raw=true)
 
 🚀 A graphical interface tool to capture and analyze in-game modules, facilitating the automatic discovery of optimal equipment combinations.
 
@@ -149,6 +150,8 @@ We appreciate your contributions! 🐛 If you find a bug, ✨ have a suggestion 
 
 <a id="spanish-version"></a>
 # ✨ BPSR Auto Modules — Optimizador de Módulos
+
+![Application Screenshot](https://github.com/mrsnakke/gachaIMG/blob/main/CAP2.png?raw=true)
 
 🚀 Herramienta con interfaz gráfica para capturar y analizar los módulos del juego, que facilita encontrar combinaciones óptimas de equipamiento de forma automática.
 
