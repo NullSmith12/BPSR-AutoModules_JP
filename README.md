@@ -3,6 +3,7 @@
 
 <a id="english-version"></a>
 # ✨ BPSR Auto Modules — Module Optimizer
+![Application Screenshot](https://github.com/mrsnakke/gachaIMG/blob/main/CAP2.png?raw=true)
 
 🚀 A graphical interface tool to capture and analyze in-game modules, facilitating the automatic discovery of optimal equipment combinations.
 
@@ -149,6 +150,8 @@ We appreciate your contributions! 🐛 If you find a bug, ✨ have a suggestion 
 
 <a id="spanish-version"></a>
 # ✨ BPSR Auto Modules — Optimizador de Módulos
+
+![Application Screenshot](https://github.com/mrsnakke/gachaIMG/blob/main/CAP2.png?raw=true)
 
 🚀 Herramienta con interfaz gráfica para capturar y analizar los módulos del juego, que facilita encontrar combinaciones óptimas de equipamiento de forma automática.
 
