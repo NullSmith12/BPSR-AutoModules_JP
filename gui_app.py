@@ -42,7 +42,29 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
 
+        # --- TEMA ---
+        self.THEME = {
+            "color": {
+                "background_main": "#202124",      # Fondo principal (muy oscuro)
+                "background_secondary": "#303134", # Paneles, botones inactivos
+                "text_primary": "#E8EAED",         # Texto principal (blanco roto)
+                "text_secondary": "#9AA0A6",       # Texto de placeholder o secundario
+                "border": "#5F6368",               # Bordes sutiles
+                "button_active_bg": "#E8EAED",     # Fondo de botón activo (el color del texto)
+                "button_active_text": "#202124"    # Texto de botón activo (el color del fondo)
+            },
+            "font": {
+                "main": ("Segoe UI", 14),
+                "title": ("Segoe UI", 24, "bold"),
+                "subtitle": ("Segoe UI", 16, "bold"),
+                "small": ("Segoe UI", 11)
+            }
+        }
+        # --- FIN DE TEMA ---
+        
         self.title("BPSR Module Optimizer by: MrSnake")
+        # Aplicar color de fondo a la ventana principal
+        self.configure(fg_color=self.THEME["color"]["background_main"])
         self.iconbitmap("icon.ico")
         self.attributes("-topmost", True)
         self.geometry("1280x1080")
@@ -69,8 +91,8 @@ class App(ctk.CTk):
         self.grid_columnconfigure(1, weight=0) # Column for the console panel (initially no weight)
         self.grid_rowconfigure(0, weight=1) # Main row for all content
 
-        self.main_frame = ctk.CTkFrame(self)
-        self.main_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        self.main_frame = ctk.CTkFrame(self, fg_color="transparent") # Hazlo transparente para que se vea el fondo de la ventana
+        self.main_frame.grid(row=0, column=0, padx=20, pady=20, sticky="nsew") # Aumenta el padding
         self.main_frame.grid_columnconfigure(0, weight=1)
         self.main_frame.grid_columnconfigure(1, weight=0) # Column for social links
 
@@ -86,7 +108,7 @@ class App(ctk.CTk):
                 "dynamic_instruction_2": " button, move your character to a location with few players around.",
                 "waiting_for_modules": "Waiting for modules to be combined",
                 "change_channel_instruction": "Change channels in-game to start processing modules.",
-                "refilter": "\uf002 Refilter",
+                "refilter": "🔍 Refilter",
                 "save_preset_title": "Save Preset",
                 "save_preset_prompt": "Enter a name for the current attribute selection:",
                 "delete_preset_title": "Delete Preset",
@@ -104,13 +126,14 @@ class App(ctk.CTk):
                 "dynamic_instruction_2": " mueve tu personaje a un lugar con pocos jugadores a tu alrededor.",
                 "waiting_for_modules": "Espera a que combine los Modulos",
                 "change_channel_instruction": "Cambia de canal dentro del juego para comenzar a procesar módulos.",
-                "refilter": "\uf002 Refiltrar",
+                "refilter": "🔍 Refiltrar",
                 "save_preset_title": "Guardar Preset",
                 "save_preset_prompt": "Introduce un nombre para la selección de atributos actual:",
                 "delete_preset_title": "Eliminar Preset",
                 "delete_preset_prompt": "¿Estás seguro de que quieres eliminar el preset '{preset_name}'?",
                 "save": "💾 Guardar",
-                "delete": "🗑️ Eliminar"
+                "delete": "🗑️ Eliminar",
+                "filter_warning": "⚠️ Debes seleccionar al menos 2 filtros para que funcione ⚠️"
             }
         }
         self.current_language = "en"
@@ -123,7 +146,9 @@ class App(ctk.CTk):
         app_icon = ctk.CTkLabel(title_frame, image=app_icon_img, text="")
         app_icon.pack(side="left", padx=(0, 10))
 
-        self.title_label = ctk.CTkLabel(title_frame, text="BPSR Module Optimizer", font=("Segoe UI", 24, "bold"))
+        self.title_label = ctk.CTkLabel(title_frame, text="BPSR Module Optimizer", 
+                                font=self.THEME["font"]["title"], 
+                                text_color=self.THEME["color"]["text_primary"])
         self.title_label.pack(side="left")
 
         language_menu = ctk.CTkOptionMenu(title_frame, values=["English", "Español"], command=self.change_language)
@@ -151,7 +176,7 @@ class App(ctk.CTk):
         x_icon.bind("<Button-1>", lambda e: webbrowser.open_new("https://x.com/MrSnakeVT"))
 
         # --- Filter Frame (initially visible) ---
-        self.filters_frame = ctk.CTkFrame(self.main_frame, fg_color="#495057")
+        self.filters_frame = ctk.CTkFrame(self.main_frame, fg_color=self.THEME["color"]["background_secondary"], corner_radius=15)
         self.filters_frame.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
         self.filters_frame.grid_columnconfigure(0, weight=1)
         self.filters_frame.grid_columnconfigure(1, weight=1)
@@ -159,41 +184,93 @@ class App(ctk.CTk):
         self.filters_frame.grid_columnconfigure(3, weight=1)
 
         # Column 0
-        self.label_category = ctk.CTkLabel(self.filters_frame, text="Select Module Type:")
-        self.label_category.grid(row=0, column=0, padx=10, pady=5, sticky="w")
-        self.category_menu = ctk.CTkOptionMenu(self.filters_frame, values=["All", "Attack", "Guard", "Support"])
+        self.label_category = ctk.CTkLabel(self.filters_frame, text="Select Module Type:", 
+                                   font=self.THEME["font"]["main"],
+                                   text_color=self.THEME["color"]["text_primary"])
+        self.label_category.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="w")
+        self.category_menu = ctk.CTkOptionMenu(
+            self.filters_frame, values=["All", "Attack", "Guard", "Support"],
+            fg_color=self.THEME["color"]["background_main"], # Fondo interior
+            button_color=self.THEME["color"]["background_secondary"], # Color del botón
+            button_hover_color=self.THEME["color"]["border"],
+            text_color=self.THEME["color"]["text_primary"],
+            dropdown_fg_color=self.THEME["color"]["background_secondary"],
+            dropdown_hover_color=self.THEME["color"]["border"],
+            corner_radius=8
+        )
         self.category_menu.grid(row=0, column=1, padx=10, pady=5, sticky="ew")
         self.category_menu.set("All")
-        self.category_menu.configure(state="normal") # Ensure it's enabled initially
+        self.category_menu.configure(state="normal") # Ensure it\'s enabled initially
 
-        self.label_interface = ctk.CTkLabel(self.filters_frame, text="Select Network Interface:")
-        self.label_interface.grid(row=0, column=2, padx=10, pady=5, sticky="w")
-        self.interface_menu = ctk.CTkOptionMenu(self.filters_frame, values=list(self.interface_map.keys()))
+        self.label_interface = ctk.CTkLabel(self.filters_frame, text="Select Network Interface:",
+                                    font=self.THEME["font"]["main"],
+                                    text_color=self.THEME["color"]["text_primary"])
+        self.label_interface.grid(row=0, column=2, padx=10, pady=(10, 5), sticky="w")
+        self.interface_menu = ctk.CTkOptionMenu(
+            self.filters_frame, values=list(self.interface_map.keys()),
+            fg_color=self.THEME["color"]["background_main"],
+            button_color=self.THEME["color"]["background_secondary"],
+            button_hover_color=self.THEME["color"]["border"],
+            text_color=self.THEME["color"]["text_primary"],
+            dropdown_fg_color=self.THEME["color"]["background_secondary"],
+            dropdown_hover_color=self.THEME["color"]["border"],
+            corner_radius=8
+        )
         self.interface_menu.grid(row=0, column=3, padx=10, pady=5, sticky="ew")
 
         # --- Presets Frame ---
-        # --- Presets Frame ---
-        self.presets_frame = ctk.CTkFrame(self.filters_frame, fg_color="#495057")
+        self.presets_frame = ctk.CTkFrame(self.filters_frame, fg_color=self.THEME["color"]["background_secondary"], corner_radius=15)
         self.presets_frame.grid(row=1, column=0, columnspan=4, padx=10, pady=(10,0), sticky="ew")
         self.presets_frame.grid_columnconfigure(0, weight=0)
         self.presets_frame.grid_columnconfigure(1, weight=1)
         self.presets_frame.grid_columnconfigure(2, weight=0)
         self.presets_frame.grid_columnconfigure(3, weight=0)
 
-        self.label_presets = ctk.CTkLabel(self.presets_frame, text="Select Preset:")
+        self.label_presets = ctk.CTkLabel(self.presets_frame, text="Select Preset:",
+                                   font=self.THEME["font"]["main"],
+                                   text_color=self.THEME["color"]["text_primary"])
         self.label_presets.grid(row=0, column=0, padx=(10, 5), pady=5, sticky="w")
 
-        self.presets_menu = ctk.CTkOptionMenu(self.presets_frame, command=self.apply_preset)
+        self.presets_menu = ctk.CTkOptionMenu(
+            self.presets_frame, command=self.apply_preset,
+            fg_color=self.THEME["color"]["background_main"],
+            button_color=self.THEME["color"]["background_secondary"],
+            button_hover_color=self.THEME["color"]["border"],
+            text_color=self.THEME["color"]["text_primary"],
+            dropdown_fg_color=self.THEME["color"]["background_secondary"],
+            dropdown_hover_color=self.THEME["color"]["border"],
+            corner_radius=8
+        )
         self.presets_menu.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
-        self.save_preset_button = ctk.CTkButton(self.presets_frame, text="", command=self.save_preset, width=80, corner_radius=8, fg_color="#2C2E33", border_color="#373a40", border_width=1)
+        self.save_preset_button = ctk.CTkButton(self.presets_frame, text="", command=self.save_preset, width=80, corner_radius=15, 
+                                                fg_color=self.THEME["color"]["background_secondary"], 
+                                                text_color=self.THEME["color"]["text_primary"],
+                                                hover_color=self.THEME["color"]["border"],
+                                                border_width=0)
         self.save_preset_button.grid(row=0, column=2, padx=5, pady=5)
 
-        self.delete_preset_button = ctk.CTkButton(self.presets_frame, text="", command=self.delete_preset, width=80, corner_radius=8, fg_color="#2C2E33", border_color="#373a40", border_width=1)
+        self.delete_preset_button = ctk.CTkButton(self.presets_frame, text="", command=self.delete_preset, width=80, corner_radius=15, 
+                                                  fg_color=self.THEME["color"]["background_secondary"], 
+                                                  text_color=self.THEME["color"]["text_primary"],
+                                                  hover_color=self.THEME["color"]["border"],
+                                                  border_width=0)
         self.delete_preset_button.grid(row=0, column=3, padx=5, pady=5)
 
-        self.attributes_buttons_frame = ctk.CTkFrame(self.filters_frame)
-        self.attributes_buttons_frame.grid(row=2, column=0, columnspan=4, padx=10, pady=10, sticky="ew")
+        self.attributes_buttons_frame = ctk.CTkFrame(self.filters_frame, fg_color="transparent")
+        # Advertencia de filtros
+        self.filter_warning_frame = ctk.CTkFrame(self.filters_frame, fg_color="transparent")
+        self.filter_warning_frame.grid(row=2, column=0, columnspan=4, padx=10, pady=(0, 5), sticky="ew")
+        self.filter_warning_frame.grid_columnconfigure(0, weight=1)
+
+        self.filter_warning_label = ctk.CTkLabel(self.filter_warning_frame, 
+                                                text="", 
+                                                font=self.THEME["font"]["main"], 
+                                                text_color="#FFCC00") # Amarillo
+        self.filter_warning_label.pack(pady=5)
+        self.update_filter_warning_text()
+
+        self.attributes_buttons_frame.grid(row=3, column=0, columnspan=4, padx=10, pady=10, sticky="ew")
 
         self.all_attributes = [
             "DMG Stack", "Agile", "Life Condense", "First Aid", "Life Wave", "Life Steal", 
@@ -211,10 +288,12 @@ class App(ctk.CTk):
             self.attributes_buttons_frame,
             text="All",
             command=self.toggle_all_attributes,
-            fg_color="#2C2E33",
-            border_color="#373a40",
-            border_width=1,
-            corner_radius=8
+            fg_color=self.THEME["color"]["background_secondary"], # Color inactivo
+            text_color=self.THEME["color"]["text_primary"],
+            hover_color=self.THEME["color"]["border"], # Un color sutil para el hover
+            border_width=1, # Borde blanco
+            border_color="white", # Color del borde blanco
+            corner_radius=15 # ¡Muy importante para la forma de píldora!
         )
         all_button.grid(row=0, column=0, padx=5, pady=5)
         self.attribute_buttons["All"] = all_button
@@ -230,35 +309,55 @@ class App(ctk.CTk):
                 self.attributes_buttons_frame,
                 text=attr,
                 command=lambda a=attr: self.toggle_attribute(a),
-                fg_color="#2C2E33",
-                border_color="#373a40",
-                border_width=1,
-                corner_radius=8
+                fg_color=self.THEME["color"]["background_secondary"], # Color inactivo
+                text_color=self.THEME["color"]["text_primary"],
+                hover_color=self.THEME["color"]["border"], # Un color sutil para el hover
+                border_width=1, # Borde blanco
+                border_color="white", # Color del borde blanco
+                corner_radius=15 # ¡Muy importante para la forma de píldora!
             )
             button.grid(row=row, column=col, padx=5, pady=5)
             self.attribute_buttons[attr] = button
             col += 1
 
-        self.control_frame = ctk.CTkFrame(self.main_frame)
+        self.control_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.control_frame.grid(row=4, column=0, columnspan=2, pady=10)
 
         play_icon = ctk.CTkImage(Image.open("Icons/play.png"), size=(16, 16))
-        self.start_button = ctk.CTkButton(self.control_frame, text="Start Monitoring", image=play_icon, command=self.start_monitoring)
+        self.start_button = ctk.CTkButton(self.control_frame, text="Start Monitoring", image=play_icon, command=self.start_monitoring,
+                                  corner_radius=8, 
+                                  fg_color="#1F6AA5") # Mantén el azul por ahora o cámbialo a un color de acento
         self.start_button.pack(side="left", padx=10)
 
         stop_icon = ctk.CTkImage(Image.open("Icons/stop.png"), size=(16, 16))
-        self.stop_button = ctk.CTkButton(self.control_frame, text="Stop Monitoring", image=stop_icon, command=self.stop_monitoring, state="disabled")
+        self.stop_button = ctk.CTkButton(self.control_frame, text="Stop Monitoring", image=stop_icon, command=self.stop_monitoring, state="disabled",
+                                  corner_radius=8, 
+                                  fg_color=self.THEME["color"]["background_secondary"],
+                                  text_color=self.THEME["color"]["text_primary"],
+                                  hover_color=self.THEME["color"]["border"],
+                                  border_width=0)
         self.stop_button.pack(side="left", padx=10)
         
-        self.rescreen_button = ctk.CTkButton(self.control_frame, text="", command=self.rescreen_results, state="disabled", font=self.fa_font)
+        self.rescreen_button = ctk.CTkButton(self.control_frame, text="\U00002700 Refiltrar", command=self.rescreen_results, state="disabled", font=self.fa_font,
+                                  corner_radius=8, 
+                                  fg_color=self.THEME["color"]["background_secondary"],
+                                  text_color=self.THEME["color"]["text_primary"],
+                                  hover_color=self.THEME["color"]["border"],
+                                  border_width=1, # Borde blanco
+                                  border_color="white") # Color del borde blanco
         self.rescreen_button.pack(side="left", padx=10)
 
         # Button to toggle the console
-        self.toggle_console_button = ctk.CTkButton(self.control_frame, text=">", command=self.toggle_console, width=30)
+        self.toggle_console_button = ctk.CTkButton(self.control_frame, text=">", command=self.toggle_console, width=30,
+                                  corner_radius=8, 
+                                  fg_color=self.THEME["color"]["background_secondary"],
+                                  text_color=self.THEME["color"]["text_primary"],
+                                  hover_color=self.THEME["color"]["border"],
+                                  border_width=0)
         self.toggle_console_button.pack(side="left", padx=10)
 
         # --- Dynamic Instructions ---
-        self.instruction_frame = ctk.CTkFrame(self.main_frame, fg_color="#2B2B2B", corner_radius=10)
+        self.instruction_frame = ctk.CTkFrame(self.main_frame, fg_color=self.THEME["color"]["background_secondary"], corner_radius=15)
         self.instruction_frame.grid(row=5, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
         
         self.instruction_icon = ctk.CTkLabel(self.instruction_frame, text="⚠️", font=("Segoe UI Emoji", 20), text_color="#FFCC00") # Yellow warning
@@ -271,15 +370,17 @@ class App(ctk.CTk):
         self.update_dynamic_instruction()
 
         # Label for simple, single-part instructions
-        self.instruction_label_simple = ctk.CTkLabel(self.instruction_frame, text="", font=("Segoe UI", 14))
+        self.instruction_label_simple = ctk.CTkLabel(self.instruction_frame, text="", font=self.THEME["font"]["main"], text_color=self.THEME["color"]["text_primary"])
         self.base_instruction_text = "" # For animation
 
         # --- Distribution Filter ---
-        self.dist_filter_frame = ctk.CTkFrame(self.main_frame)
+        self.dist_filter_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.dist_filter_frame.grid(row=6, column=0, columnspan=2, padx=10, pady=(5, 0), sticky="ew")
         self.dist_filter_frame.grid_remove() # Hide initially
 
-        self.label_dist_filter = ctk.CTkLabel(self.dist_filter_frame, text="Attr. Distribution:")
+        self.label_dist_filter = ctk.CTkLabel(self.dist_filter_frame, text="Attr. Distribution:",
+                                      font=self.THEME["font"]["main"],
+                                      text_color=self.THEME["color"]["text_primary"])
         self.label_dist_filter.pack(side="left", padx=(10, 10))
 
         self.dist_filter_buttons: Dict[str, ctk.CTkButton] = {}
@@ -289,8 +390,11 @@ class App(ctk.CTk):
                 self.dist_filter_frame,
                 text=f,
                 command=lambda name=f: self.set_distribution_filter(name),
-                width=70, # Ligeramente menos largo
-                corner_radius=8 # Más redondeado
+                fg_color=self.THEME["color"]["background_secondary"],
+                text_color=self.THEME["color"]["text_primary"],
+                hover_color=self.THEME["color"]["border"],
+                border_width=0,
+                corner_radius=15
             )
             btn.pack(side="left", padx=5)
         self.dist_filter_buttons[f] = btn
@@ -303,14 +407,25 @@ class App(ctk.CTk):
         self.console_frame.grid_rowconfigure(0, weight=1)
         self.console_frame.grid_columnconfigure(0, weight=1)
 
-        log_font = ("Microsoft YaHei UI", 18, "bold")
-        self.log_textbox = ctk.CTkTextbox(self.console_frame, state="disabled", wrap="word", font=log_font, spacing3=4)
+        self.console_frame = ctk.CTkFrame(self, width=400, fg_color=self.THEME["color"]["background_secondary"], corner_radius=15)
+        self.console_frame.grid(row=0, column=1, rowspan=2, padx=10, pady=10, sticky="ns")
+        self.console_frame.grid_remove() # Hide by default
+
+        self.console_frame.grid_rowconfigure(0, weight=1)
+        self.console_frame.grid_columnconfigure(0, weight=1)
+
+        self.log_textbox = ctk.CTkTextbox(self.console_frame, 
+                                  fg_color=self.THEME["color"]["background_main"], # Un fondo más oscuro para el texto
+                                  border_color=self.THEME["color"]["border"],
+                                  border_width=1,
+                                  text_color=self.THEME["color"]["text_primary"],
+                                  font=self.THEME["font"]["main"])
         self.log_textbox.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
 
         # --- Status Bar ---
-        self.status_frame = ctk.CTkFrame(self)
+        self.status_frame = ctk.CTkFrame(self, fg_color="transparent", height=30)
         self.status_frame.grid(row=1, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
-        self.status_label = ctk.CTkLabel(self.status_frame, text="Status: Idle", anchor="w")
+        self.status_label = ctk.CTkLabel(self.status_frame, text="Status: Idle", anchor="w", text_color=self.THEME["color"]["text_secondary"], font=self.THEME["font"]["main"])
         self.status_label.pack(side="left", padx=10, pady=2)
 
         self.log_queue = queue.Queue()
@@ -326,7 +441,10 @@ class App(ctk.CTk):
         self.attribute_images = self.load_attribute_images() # Pre-load attribute icons
 
         # --- Results Display ---
-        self.results_frame = ctk.CTkScrollableFrame(self.main_frame, label_text="Combinations")
+        self.results_frame = ctk.CTkScrollableFrame(self.main_frame, label_text="Combinations",
+                                            fg_color="transparent",
+                                            label_font=self.THEME["font"]["subtitle"],
+                                            label_text_color=self.THEME["color"]["text_primary"])
         self.results_frame.grid(row=7, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
         self.results_frame.grid_columnconfigure(0, weight=1)
         self.results_frame.grid_columnconfigure(1, weight=1)
@@ -382,8 +500,9 @@ class App(ctk.CTk):
         self.delete_preset_button.configure(text=lang_dict.get("delete", "🗑️ Delete"))
         
         self.update_dynamic_instruction()
+        self.update_filter_warning_text()
         
-        # Update instruction text if it's currently visible
+        # Update instruction text if it\'s currently visible
         if self.instruction_label_simple.winfo_viewable():
             if "Waiting" in self.base_instruction_text:
                  self.base_instruction_text = lang_dict["waiting_for_modules"]
@@ -391,6 +510,10 @@ class App(ctk.CTk):
                  self.base_instruction_text = lang_dict["change_channel_instruction"]
             self.instruction_label_simple.configure(text=self.base_instruction_text)
 
+
+    def update_filter_warning_text(self):
+        lang_dict = self.translations[self.current_language]
+        self.filter_warning_label.configure(text=lang_dict.get("filter_warning", "⚠️ You must select at least 2 filters to work ⚠️"))
 
     def update_dynamic_instruction(self):
         # Clear previous widgets
@@ -489,7 +612,7 @@ class App(ctk.CTk):
         """Toggles the selection state of an attribute button."""
         if attribute_name in self.selected_attributes:
             self.selected_attributes.remove(attribute_name)
-            self.attribute_buttons[attribute_name].configure(fg_color="#2C2E33")
+            self.attribute_buttons[attribute_name].configure(fg_color="#18191B")
         else:
             self.selected_attributes.add(attribute_name)
             self.attribute_buttons[attribute_name].configure(fg_color="#1F6AA5") # Blue
@@ -498,7 +621,7 @@ class App(ctk.CTk):
         if len(self.selected_attributes) == len(self.all_attributes):
             self.attribute_buttons["All"].configure(fg_color="#1F6AA5")
         else:
-            self.attribute_buttons["All"].configure(fg_color="#2C2E33")
+            self.attribute_buttons["All"].configure(fg_color="#1D1E22")
 
     def toggle_all_attributes(self):
         """Toggles all attributes on or off."""
@@ -619,7 +742,11 @@ class App(ctk.CTk):
             rank = start_index + i + 1
             row, col = divmod(i, 2)
 
-            solution_frame = ctk.CTkFrame(self.results_frame, border_width=2, border_color="#565B5E")
+            solution_frame = ctk.CTkFrame(self.results_frame, 
+                              fg_color=self.THEME["color"]["background_secondary"], 
+                              border_color=self.THEME["color"]["border"], # Borde sutil
+                              border_width=1, 
+                              corner_radius=15)
             solution_frame.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
             solution_frame.grid_columnconfigure(0, weight=1)
 
@@ -634,7 +761,8 @@ class App(ctk.CTk):
             header_label = ctk.CTkLabel(
                 left_header_frame, 
                 text=f"Rank {rank} (Score: {solution.optimization_score:.2f})",
-                font=("Segoe UI", 16, "bold")
+                font=self.THEME["font"]["subtitle"],
+                text_color=self.THEME["color"]["text_primary"]
             )
             header_label.pack(side="left")
 
@@ -643,8 +771,8 @@ class App(ctk.CTk):
 
             total_attr_value = sum(solution.attr_breakdown.values())
             
-            # The combat power is stored in the 'score' attribute of the solution.
-            combat_power = getattr(solution, 'score', 'N/A') 
+            # The combat power is stored in the \'score\' attribute of the solution.
+            combat_power = getattr(solution, 'score', 'N/A')
             if isinstance(combat_power, (int, float)):
                 combat_power = f"{combat_power:.0f}"
 
@@ -652,7 +780,8 @@ class App(ctk.CTk):
             stats_label = ctk.CTkLabel(
                 right_header_frame,
                 text=stats_text,
-                font=("Segoe UI", 12)
+                font=self.THEME["font"]["small"],
+                text_color=self.THEME["color"]["text_secondary"]
             )
             stats_label.pack(side="right")
 
@@ -666,9 +795,19 @@ class App(ctk.CTk):
             for j, module in enumerate(solution.modules):
                 modules_container.grid_columnconfigure(j, weight=1)
                 rarity = module.name.split()[0]
-                color = rarity_colors.get(rarity, "#333333")
-
-                module_card = ctk.CTkFrame(modules_container, border_width=1, border_color="gray", fg_color=color)
+                # Quita el color de rareza del fondo para un look más limpio, o hazlo más sutil.
+                # Por ejemplo, puedes poner el color en el borde.
+                rarity_colors = {
+                    "Rare": "#34558b",
+                    "Epic": "#6f42c1",
+                    "Legendary": "#ffc107"
+                }
+                color = rarity_colors.get(rarity, self.THEME["color"]["border"])
+                module_card = ctk.CTkFrame(modules_container,
+                                   fg_color=self.THEME["color"]["background_main"], # Fondo neutro
+                                   border_width=1,
+                                   border_color=color, # Usa el color de rareza en el borde
+                                   corner_radius=10)
                 module_card.grid(row=0, column=j, padx=5, pady=5, sticky="ns")
 
                 img_label = ctk.CTkLabel(module_card, image=self.module_images.get(module.name), text="")
@@ -687,7 +826,9 @@ class App(ctk.CTk):
                         icon_label.pack(side="left", padx=(0, 3))
 
                     attr_text = f"{part.name}+{part.value}"
-                    attrs_label = ctk.CTkLabel(attr_line_frame, text=attr_text, font=("Segoe UI", 10))
+                    attrs_label = ctk.CTkLabel(attr_line_frame, text=attr_text, 
+                                           font=self.THEME["font"]["small"],
+                                           text_color=self.THEME["color"]["text_primary"])
                     attrs_label.pack(side="left")
 
             stats_frame = ctk.CTkFrame(content_frame)
