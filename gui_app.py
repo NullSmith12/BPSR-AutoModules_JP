@@ -776,7 +776,7 @@ class App(ctk.CTk):
             if isinstance(combat_power, (int, float)):
                 combat_power = f"{combat_power:.0f}"
 
-            stats_text = f"Total Attributes: {total_attr_value} | Hability Score: {combat_power}"
+            stats_text = f"Total Attributes: {total_attr_value} | Ability Score: {combat_power}"
             stats_label = ctk.CTkLabel(
                 right_header_frame,
                 text=stats_text,
