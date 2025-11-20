@@ -26,7 +26,7 @@
 - 💻 Integrated console — process logs visible in a panel that you can show or hide.
 
 ## 🛠️ Installation and Usage (For Users preferring a simple installation - Recommended)
-![Application Screenshot](https://github.com/mrsnakke/gachaIMG/blob/main/PORTADA%202026%20(1).jpg?raw=true)
+[![PORTADA DE VIDEO](https://github.com/mrsnakke/gachaIMG/blob/main/PORTADA%202026%20(1).jpg?raw=true)](https://youtu.be/P_VSNP-Y9ME?si=j-Ubt9q6ZCfzbC3e)
 
 🚀 For a quick and easy setup, use our installer.
 
@@ -175,7 +175,7 @@ We appreciate your contributions! 🐛 If you find a bug, ✨ have a suggestion 
 - 💻 Consola integrada — registros de proceso visibles en un panel que puedes mostrar u ocultar.
 
 ## 🛠️ Instalación y Uso (Para Usuarios que prefieren una instalación sencilla - Recomendado)
-![Application Screenshot](https://github.com/mrsnakke/gachaIMG/blob/main/PORTADA%202026%20(1).jpg?raw=true)
+[![PORTADA DE VIDEO](https://github.com/mrsnakke/gachaIMG/blob/main/PORTADA%202026%20(1).jpg?raw=true)](https://youtu.be/P_VSNP-Y9ME?si=j-Ubt9q6ZCfzbC3e)
 🚀 Para una configuración rápida y sencilla, utiliza nuestro instalador.
 
 1.  ⬇️ **Descarga el Instalador**:
