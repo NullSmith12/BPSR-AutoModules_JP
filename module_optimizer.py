@@ -100,7 +100,7 @@ def calculate_fitness(modules: List[ModuleInfo], category: ModuleCategory,
 
     target_attrs = set()
     if category == ModuleCategory.ATTACK: target_attrs = ATTACK_ATTRIBUTES
-    elif category == ModuleCategory.GUARDIAN: target_attrs = GUARDIES_ATTRIBUTES
+    elif category == ModuleCategory.GUARDIAN: target_attrs = GUARDIAN_ATTRIBUTES
     elif category == ModuleCategory.SUPPORT: target_attrs = SUPPORT_ATTRIBUTES
     score += sum(value * 5 for attr_name, value in attr_breakdown.items() if attr_name in target_attrs)
 
