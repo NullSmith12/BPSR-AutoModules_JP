@@ -95,10 +95,12 @@ class StarResonanceMonitor:
         print(f"Prioritized Attributes: {', '.join(attributes) if attributes else 'None'}")
         
         category_map = {
-            "攻击": ModuleCategory.ATTACK, "守护": ModuleCategory.GUARDIAN,
-            "辅助": ModuleCategory.SUPPORT, "全部": ModuleCategory.All
+            "All": ModuleCategory.All, "Attack": ModuleCategory.ATTACK, "Guard": ModuleCategory.GUARDIAN, "Support": ModuleCategory.SUPPORT,
+            "Todos": ModuleCategory.All, "Ataque": ModuleCategory.ATTACK, "Guardia": ModuleCategory.GUARDIAN, "Soporte": ModuleCategory.SUPPORT
         }
         target_category = category_map.get(category, ModuleCategory.All)
+        
+        logger.info(f"Target Category: {target_category} (from input '{category}')")
         
         try:
             solutions = self.module_optimizer.get_optimal_solutions(

@@ -267,8 +267,7 @@ class App(ctk.CTk):
                                                 text="", 
                                                 font=self.THEME["font"]["main"], 
                                                 text_color="#FFCC00") # Amarillo
-        self.filter_warning_label.pack(pady=5)
-        self.update_filter_warning_text()
+        self.filter_warning_label.pack_forget() # Hide by default
 
         self.attributes_buttons_frame.grid(row=3, column=0, columnspan=4, padx=10, pady=10, sticky="ew")
 
@@ -282,7 +281,8 @@ class App(ctk.CTk):
         
         self.attribute_buttons: Dict[str, ctk.CTkButton] = {}
         self.selected_attributes = set()
-
+        self.update_filter_status() # Initial call to set warning status
+        
         # --- Create "All" button ---
         all_button = ctk.CTkButton(
             self.attributes_buttons_frame,
@@ -509,11 +509,23 @@ class App(ctk.CTk):
             elif "Change channels" in self.base_instruction_text:
                  self.base_instruction_text = lang_dict["change_channel_instruction"]
             self.instruction_label_simple.configure(text=self.base_instruction_text)
+        
+        self.update_filter_status() # Update warning text after language change
 
 
     def update_filter_warning_text(self):
         lang_dict = self.translations[self.current_language]
-        self.filter_warning_label.configure(text=lang_dict.get("filter_warning", "⚠️ You must select at least 2 filters to work ⚠️"))
+        # This function is now superseded by update_filter_status for dynamic display
+        # but is kept to provide the raw text if needed elsewhere.
+        return lang_dict.get("filter_warning", "⚠️ You must select at least 2 filters to work ⚠️")
+
+    def update_filter_status(self):
+        lang_dict = self.translations[self.current_language]
+        if len(self.selected_attributes) < 2:
+            self.filter_warning_label.configure(text=self.update_filter_warning_text())
+            self.filter_warning_label.pack(pady=5) # Make visible
+        else:
+            self.filter_warning_label.pack_forget() # Hide
 
     def update_dynamic_instruction(self):
         # Clear previous widgets
@@ -622,6 +634,7 @@ class App(ctk.CTk):
             self.attribute_buttons["All"].configure(fg_color="#1F6AA5")
         else:
             self.attribute_buttons["All"].configure(fg_color="#1D1E22")
+        self.update_filter_status() # Update warning status
 
     def toggle_all_attributes(self):
         """Toggles all attributes on or off."""
@@ -637,6 +650,7 @@ class App(ctk.CTk):
                 if attr != "All":
                     button.configure(fg_color="#1F6AA5")
             self.attribute_buttons["All"].configure(fg_color="#1F6AA5")
+        self.update_filter_status() # Update warning status
 
     def poll_queues(self):
         # Merge processing of two queues
@@ -709,6 +723,8 @@ class App(ctk.CTk):
         self.dist_filter_frame.grid() # Show distribution filter
 
         self.all_solutions_cache = solutions
+        if self.all_solutions_cache:
+            self.rescreen_button.configure(state="normal") # Enable rescreen button if there are solutions
         self.apply_filters_and_redisplay()
 
     def display_current_page(self):
@@ -1086,6 +1102,7 @@ class App(ctk.CTk):
         self.start_button.configure(state="normal")
         self.stop_button.configure(state="disabled")
         self.interface_menu.configure(state="normal")
+        self.category_menu.configure(state="normal") # Category menu should be enabled after stopping
         self.rescreen_button.configure(state="disabled")
         self.status_label.configure(text="Status: Idle")
         self.dist_filter_frame.grid_remove() # Hide distribution filter
