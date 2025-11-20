@@ -54,13 +54,42 @@ def calculate_fitness(modules: List[ModuleInfo], category: ModuleCategory,
             attr_breakdown[part.name] = attr_breakdown.get(part.name, 0) + part.value
     
     score = 0.0
+
+    # Helper to convert value -> level (0..6)
+    def value_to_level_fitness(val: int) -> int:
+        if val >= 20: return 6
+        if val >= 16: return 5
+        if val >= 12: return 4
+        if val >= 8: return 3
+        if val >= 4: return 2
+        if val >= 1: return 1
+        return 0
+
     if prioritized_attrs:
         prioritized_set = set(prioritized_attrs)
-        actual_attrs_set = set(attr_breakdown.keys())
-        match_count = len(prioritized_set.intersection(actual_attrs_set))
-        score += match_count * 100
-        mismatch_count = len(actual_attrs_set.difference(prioritized_set))
-        score -= mismatch_count * 50
+        # Give strong bonus for prioritized attributes, especially at higher levels
+        prioritized_attr_score = 0
+        for attr_name in prioritized_attrs:
+            value = attr_breakdown.get(attr_name, 0)
+            level = value_to_level_fitness(value)
+            if level == 6: prioritized_attr_score += 5000 # Very strong bonus for Lv6
+            elif level == 5: prioritized_attr_score += 2000 # Strong bonus for Lv5
+            elif level == 4: prioritized_attr_score += 500
+            elif level == 3: prioritized_attr_score += 100
+            elif level == 2: prioritized_attr_score += 50
+            elif level == 1: prioritized_attr_score += 10
+        score += prioritized_attr_score
+
+        # Also give a general bonus for just having prioritized attributes
+        match_count = len(prioritized_set.intersection(set(attr_breakdown.keys())))
+        score += match_count * 100 # Keep a smaller bonus for presence
+
+        # Minor penalty for non-prioritized attributes if prioritized_attrs is active
+        # This helps prune solutions that are "too wide" when only specific attributes matter
+        if prioritized_set: # Only apply if there are actual prioritized attrs
+            non_prioritized_attrs = set(attr_breakdown.keys()).difference(prioritized_set)
+            score -= sum(attr_breakdown[attr] for attr in non_prioritized_attrs) * 5 # Small penalty for other attributes
+
 
     threshold_score = 0
     for attr_name, value in attr_breakdown.items():
@@ -71,7 +100,7 @@ def calculate_fitness(modules: List[ModuleInfo], category: ModuleCategory,
 
     target_attrs = set()
     if category == ModuleCategory.ATTACK: target_attrs = ATTACK_ATTRIBUTES
-    elif category == ModuleCategory.GUARDIAN: target_attrs = GUARDIAN_ATTRIBUTES
+    elif category == ModuleCategory.GUARDIAN: target_attrs = GUARDIES_ATTRIBUTES
     elif category == ModuleCategory.SUPPORT: target_attrs = SUPPORT_ATTRIBUTES
     score += sum(value * 5 for attr_name, value in attr_breakdown.items() if attr_name in target_attrs)
 
@@ -279,12 +308,12 @@ class ModuleOptimizer:
         available_attrs = {p.name for m in module_pool for p in m.parts}
         prioritized_set = set(prioritized_attrs)
         intersection = available_attrs.intersection(prioritized_set)
-        if len(intersection) < 2:
+        if len(intersection) == 0:
             self.logger.warning("="*50 + "\n>>> Pre-check failed: Filtering cannot proceed!\n" +
-                                f">>> Reason: Less than two user-specified attributes found in the selected module type.\n" +
-                                f">>> Found attributes: {list(intersection)}\n" +
-                                ">>> Optimization skipped automatically. Please adjust module types or filter attributes and retry.\n" + "="*50)
+                                f">>> Reason: No user-specified prioritized attributes found in the selected module type.\n" +
+                                f">>> Optimization skipped automatically. Please adjust module types or filter attributes and retry.\n" + "="*50)
             return False
+        # Allow optimization to proceed with at least one prioritized attribute
         return True
 
     def _get_attribute_level_key(self, attr_breakdown: Dict[str, int]) -> Tuple[str, ...]:
@@ -301,8 +330,51 @@ class ModuleOptimizer:
             levels.append(f"{attr_name}{level_str}")
         return tuple(levels)
 
+    def _compute_priority_sort_key(self, solution: ModuleSolution, prioritized_attrs: List[str], top_k: int = 4) -> Tuple:
+        """Compute a sort key for a solution based on prioritized attributes.
+
+        The key orders solutions by counts of highest levels among the top_k prioritized attributes.
+        Returned tuple is suitable for sorting in descending order.
+        """
+        # helper to convert value -> level (0..6) using same thresholds as elsewhere
+        def value_to_level(val: int) -> int:
+            if val >= 20: return 6
+            if val >= 16: return 5
+            if val >= 12: return 4
+            if val >= 8: return 3
+            if val >= 4: return 2
+            if val >= 1: return 1
+            return 0
+
+        # build list of (attr_name, level, user_index)
+        levels = []
+        for idx, attr in enumerate(prioritized_attrs):
+            lvl = value_to_level(solution.attr_breakdown.get(attr, 0))
+            levels.append((attr, lvl, idx))
+
+        # pick top_k attributes by (level desc, user order asc)
+        top_selected = sorted(levels, key=lambda x: (-x[1], x[2]))[:top_k]
+
+        # count occurrences of each high level (6..1)
+        counts = {i: 0 for i in range(1, 7)}
+        sum_levels = 0
+        for _attr, lvl, _ in top_selected:
+            if lvl >= 1:
+                counts[lvl] += 1
+                sum_levels += lvl
+
+        # build key: prefer more 6s, then 5s, then 4s, ..., then sum_levels, then score, then optimization_score
+        key = (
+            counts[6], counts[5], counts[4], counts[3], counts[2], counts[1],
+            sum_levels,
+            solution.score if solution.score is not None else 0,
+            solution.optimization_score if solution.optimization_score is not None else 0
+        )
+        return key
+
     def optimize_modules(self, modules: List[ModuleInfo], category: ModuleCategory, top_n: int = 40,
                          prioritized_attrs: Optional[List[str]] = None,
+                         priority_order_mode: bool = False,
                          progress_callback: Optional[Callable[[str], None]] = None) -> List[ModuleSolution]:
         
         self.logger.info(f"Starting optimization for {category.value} type modules (using {self.num_campaigns} parallel tasks)")
@@ -368,8 +440,10 @@ class ModuleOptimizer:
             if not solution.attr_breakdown:
                 solution.score, solution.attr_breakdown = self.calculate_combat_power(solution.modules)
 
+        # default sort by optimization score for stability before deduplication
         final_results.sort(key=lambda s: s.optimization_score, reverse=True)
-        
+
+        # Deduplicate by attribute-level signature
         solutions_by_attr_level = {}
         for solution in final_results:
             attr_level_key = self._get_attribute_level_key(solution.attr_breakdown)
@@ -377,7 +451,14 @@ class ModuleOptimizer:
                 solutions_by_attr_level[attr_level_key] = solution
 
         deduplicated_solutions = list(solutions_by_attr_level.values())
-        deduplicated_solutions.sort(key=lambda s: s.score, reverse=True)
+
+        # If user requested priority-order mode and provided prioritized attributes, apply that ordering
+        if prioritized_attrs and priority_order_mode:
+            # compute priority sort key for each solution and sort by it descending
+            deduplicated_solutions.sort(key=lambda s: self._compute_priority_sort_key(s, prioritized_attrs), reverse=True)
+        else:
+            # fallback: sort by final combat power score
+            deduplicated_solutions.sort(key=lambda s: s.score, reverse=True)
 
         self.logger.info(f"Parallel optimization completed. Found {len(deduplicated_solutions)} high-quality combinations deduplicated by attribute level.")
         if progress_callback: progress_callback(f"Completed! Found {len(deduplicated_solutions)} unique combinations.")
@@ -430,6 +511,7 @@ class ModuleOptimizer:
 
     def get_optimal_solutions(self, modules: List[ModuleInfo], category: ModuleCategory = ModuleCategory.All,
                            top_n: int = 40, prioritized_attrs: Optional[List[str]] = None,
+                           priority_order_mode: bool = False,
                            progress_callback: Optional[Callable[[str], None]] = None) -> List[ModuleSolution]:
         """
         Optimizes modules and returns a list of solutions instead of printing them.
@@ -440,8 +522,8 @@ class ModuleOptimizer:
         print(title); self._log_result(title)
         print(separator); self._log_result(separator)
         
-        optimal_solutions = self.optimize_modules(modules, category, top_n, prioritized_attrs, progress_callback)
-        
+        optimal_solutions = self.optimize_modules(modules, category, top_n, prioritized_attrs, priority_order_mode, progress_callback)
+
         if not optimal_solutions:
             msg = f"No valid combinations found that meet all filtering criteria.\nHint: Please check if the filtering attributes are too strict, or if the module pool lacks modules that meet the requirements."
             print(msg); self._log_result(msg)

@@ -16,12 +16,15 @@ class StarResonanceMonitor:
     """Star Resonance Monitor"""
 
     def __init__(self, interface_name: str, category: str = "攻击", attributes: List[str] = None,
+                 prioritized_attrs: Optional[List[str]] = None, priority_order_mode: bool = False,
                  on_data_captured_callback: Optional[Callable] = None,
                  progress_callback: Optional[Callable[[str], None]] = None,
                  on_results_callback: Optional[Callable[[List[Any]], None]] = None): # Add results callback
         self.interface_name = interface_name
         self.initial_category = category
         self.initial_attributes = attributes or []
+        self.initial_prioritized_attrs = prioritized_attrs or []
+        self.initial_priority_order_mode = priority_order_mode
         self.on_data_captured_callback = on_data_captured_callback
         self.progress_callback = progress_callback
         self.on_results_callback = on_results_callback # Save results callback
@@ -66,7 +69,8 @@ class StarResonanceMonitor:
                         print(f"Successfully parsed and stored {len(self.captured_modules)} modules.")
                         
                         # Perform initial screening
-                        self.rescreen_modules(self.initial_category, self.initial_attributes)
+                        self.rescreen_modules(self.initial_category, self.initial_attributes,
+                                               self.initial_prioritized_attrs, self.initial_priority_order_mode)
                         
                         # Notify GUI to enable "Rescreen" button
                         if self.on_data_captured_callback:
@@ -82,7 +86,8 @@ class StarResonanceMonitor:
         """Checks if module data has been captured and stored"""
         return self.captured_modules is not None
 
-    def _run_optimization_in_background(self, category: str, attributes: List[str]):
+    def _run_optimization_in_background(self, category: str, attributes: List[str], 
+                                         prioritized_attrs: List[str], priority_order_mode: bool):
         """
         Runs the optimization process in a separate thread to avoid blocking the UI.
         """
@@ -92,7 +97,9 @@ class StarResonanceMonitor:
 
         print(f"\n--- Starting optimization in background with new conditions ---")
         print(f"Module Type: {category}")
-        print(f"Prioritized Attributes: {', '.join(attributes) if attributes else 'None'}")
+        print(f"Filtered Attributes: {', '.join(attributes) if attributes else 'None'}")
+        if priority_order_mode and prioritized_attrs:
+            print(f"Prioritized Ordering (top 4): {', '.join(prioritized_attrs)}")
         
         category_map = {
             "All": ModuleCategory.All, "Attack": ModuleCategory.ATTACK, "Guard": ModuleCategory.GUARDIAN, "Support": ModuleCategory.SUPPORT,
@@ -107,7 +114,8 @@ class StarResonanceMonitor:
                 self.captured_modules,
                 target_category,
                 top_n=20,
-                prioritized_attrs=attributes,
+                prioritized_attrs=prioritized_attrs if priority_order_mode else attributes, # Pass prioritized_attrs for ordering
+                priority_order_mode=priority_order_mode,
                 progress_callback=self.progress_callback
             )
 
@@ -123,7 +131,8 @@ class StarResonanceMonitor:
             if self.progress_callback:
                 self.progress_callback("Optimization failed.")
 
-    def rescreen_modules(self, category: str, attributes: List[str]):
+    def rescreen_modules(self, category: str, attributes: List[str], 
+                         prioritized_attrs: Optional[List[str]] = None, priority_order_mode: bool = False):
         """Rescreens captured data with new filter conditions by running optimization in a separate thread."""
         if not self.has_captured_data():
             print("Error: No module data available for rescreening.")
@@ -132,7 +141,7 @@ class StarResonanceMonitor:
         # Start the optimization in a new thread
         optimization_thread = threading.Thread(
             target=self._run_optimization_in_background,
-            args=(category, attributes),
+            args=(category, attributes, prioritized_attrs, priority_order_mode),
             daemon=True
         )
         optimization_thread.start()

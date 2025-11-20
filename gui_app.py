@@ -133,7 +133,9 @@ class App(ctk.CTk):
                 "delete_preset_prompt": "¿Estás seguro de que quieres eliminar el preset '{preset_name}'?",
                 "save": "💾 Guardar",
                 "delete": "🗑️ Eliminar",
-                "filter_warning": "⚠️ Debes seleccionar al menos 2 filtros para que funcione ⚠️"
+                "filter_warning": "⚠️ Debes seleccionar al menos 2 filtros para que funcione ⚠️",
+                "enable_priority_ordering": "Activar Modo de Ordenamiento por Prioridad (máx. 6 atributos)",
+                "select_priority_attrs": "Selecciona atributos para priorizar (máx. 6)."
             }
         }
         self.current_language = "en"
@@ -280,7 +282,8 @@ class App(ctk.CTk):
         ]
         
         self.attribute_buttons: Dict[str, ctk.CTkButton] = {}
-        self.selected_attributes = set()
+        self.selected_attributes = set() # Attributes selected in the pill buttons (order not important here)
+        self.ordered_prioritized_attrs: List[str] = [] # Attributes selected for priority ordering (order is important)
         self.update_filter_status() # Initial call to set warning status
         
         # --- Create "All" button ---
@@ -320,8 +323,28 @@ class App(ctk.CTk):
             self.attribute_buttons[attr] = button
             col += 1
 
+        # --- Priority Ordering Controls ---
+        self.priority_ordering_frame = ctk.CTkFrame(self.filters_frame, fg_color=self.THEME["color"]["background_secondary"], corner_radius=15)
+        self.priority_ordering_frame.grid(row=4, column=0, columnspan=4, padx=10, pady=(10,0), sticky="ew")
+        self.priority_ordering_frame.grid_columnconfigure(0, weight=1)
+
+        self.priority_order_checkbox = ctk.CTkCheckBox(
+            self.priority_ordering_frame, 
+            text="Enable Priority Ordering Mode (max 6 attributes)", 
+            font=self.THEME["font"]["main"],
+            text_color=self.THEME["color"]["text_primary"],
+            command=self.update_priority_attrs_ui
+        )
+        self.priority_order_checkbox.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+
+        self.priority_attrs_container = ctk.CTkFrame(self.priority_ordering_frame, fg_color="transparent")
+        self.priority_attrs_container.grid(row=1, column=0, padx=5, pady=5, sticky="ew")
+        self.priority_attrs_container.grid_columnconfigure(0, weight=1)
+        # This container will hold the ordered list of attributes with up/down/remove buttons
+        self.update_priority_attrs_ui() # Initial call to set visibility
+
         self.control_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        self.control_frame.grid(row=4, column=0, columnspan=2, pady=10)
+        self.control_frame.grid(row=5, column=0, columnspan=2, pady=10)
 
         play_icon = ctk.CTkImage(Image.open("Icons/play.png"), size=(16, 16))
         self.start_button = ctk.CTkButton(self.control_frame, text="Start Monitoring", image=play_icon, command=self.start_monitoring,
@@ -358,7 +381,7 @@ class App(ctk.CTk):
 
         # --- Dynamic Instructions ---
         self.instruction_frame = ctk.CTkFrame(self.main_frame, fg_color=self.THEME["color"]["background_secondary"], corner_radius=15)
-        self.instruction_frame.grid(row=5, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
+        self.instruction_frame.grid(row=6, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
         
         self.instruction_icon = ctk.CTkLabel(self.instruction_frame, text="⚠️", font=("Segoe UI Emoji", 20), text_color="#FFCC00") # Yellow warning
         self.instruction_icon.pack(side="left", padx=(10, 5), pady=5)
@@ -621,28 +644,41 @@ class App(ctk.CTk):
             self.filters_frame.grid()
 
     def toggle_attribute(self, attribute_name: str):
-        """Toggles the selection state of an attribute button."""
+        """Toggles the selection state of an attribute button and manages priority order list."""
         if attribute_name in self.selected_attributes:
             self.selected_attributes.remove(attribute_name)
-            self.attribute_buttons[attribute_name].configure(fg_color="#18191B")
+            self.attribute_buttons[attribute_name].configure(fg_color=self.THEME["color"]["background_secondary"])
+            # Remove from ordered list if present
+            if attribute_name in self.ordered_prioritized_attrs:
+                self.ordered_prioritized_attrs.remove(attribute_name)
         else:
-            self.selected_attributes.add(attribute_name)
-            self.attribute_buttons[attribute_name].configure(fg_color="#1F6AA5") # Blue
-
+            if len(self.ordered_prioritized_attrs) < 6: # Limit to 6 prioritized attributes
+                self.selected_attributes.add(attribute_name)
+                self.attribute_buttons[attribute_name].configure(fg_color="#1F6AA5") # Blue
+                # Add to ordered list if not already there
+                if attribute_name not in self.ordered_prioritized_attrs:
+                    self.ordered_prioritized_attrs.append(attribute_name)
+            else:
+                logging.warning("Cannot add more than 6 prioritized attributes.")
+                # Optionally, inform the user via a tooltip or status message
+        
         # Update "All" button state
         if len(self.selected_attributes) == len(self.all_attributes):
             self.attribute_buttons["All"].configure(fg_color="#1F6AA5")
         else:
-            self.attribute_buttons["All"].configure(fg_color="#1D1E22")
+            self.attribute_buttons["All"].configure(fg_color=self.THEME["color"]["background_secondary"])
+        
         self.update_filter_status() # Update warning status
+        self.update_priority_attrs_ui() # Update the UI for ordered attributes
 
     def toggle_all_attributes(self):
-        """Toggles all attributes on or off."""
+        """Toggles all attributes on or off and manages priority order list."""
         if len(self.selected_attributes) == len(self.all_attributes):
             # If all are selected, deselect all
             self.selected_attributes.clear()
+            self.ordered_prioritized_attrs.clear() # Clear ordered list as well
             for attr, button in self.attribute_buttons.items():
-                button.configure(fg_color="#2C2E33")
+                button.configure(fg_color=self.THEME["color"]["background_secondary"])
         else:
             # If not all are selected, select all
             self.selected_attributes.update(self.all_attributes)
@@ -650,7 +686,15 @@ class App(ctk.CTk):
                 if attr != "All":
                     button.configure(fg_color="#1F6AA5")
             self.attribute_buttons["All"].configure(fg_color="#1F6AA5")
+            
+            # If priority mode is enabled, add up to 6 attributes to the ordered list
+            if self.priority_order_checkbox.get() == 1:
+                self.ordered_prioritized_attrs = [attr for attr in self.all_attributes if attr in self.selected_attributes][:6]
+            else:
+                self.ordered_prioritized_attrs.clear() # Ensure it's clear if not in priority mode
+
         self.update_filter_status() # Update warning status
+        self.update_priority_attrs_ui() # Update the UI for ordered attributes
 
     def poll_queues(self):
         # Merge processing of two queues
@@ -987,6 +1031,86 @@ class App(ctk.CTk):
         self.presets_menu.configure(values=list(self.presets.keys()))
         self.presets_menu.set("Manual Input / Clear")
 
+    def update_priority_attrs_ui(self):
+        """Builds or clears the UI for ordered prioritized attributes based on checkbox state."""
+        # Clear existing widgets in the container
+        for widget in self.priority_attrs_container.winfo_children():
+            widget.destroy()
+
+        if self.priority_order_checkbox.get() == 1:
+            self.priority_attrs_container.grid() # Ensure container is visible
+            
+            if not self.ordered_prioritized_attrs:
+                label = ctk.CTkLabel(self.priority_attrs_container, text="Select attributes to prioritize (max 6).", 
+                                     font=self.THEME["font"]["small"], 
+                                     text_color=self.THEME["color"]["text_secondary"])
+                label.pack(pady=5)
+                return
+
+            for idx, attr_name in enumerate(self.ordered_prioritized_attrs):
+                attr_row_frame = ctk.CTkFrame(self.priority_attrs_container, fg_color="transparent")
+                attr_row_frame.grid(row=idx, column=0, padx=5, pady=2, sticky="ew")
+                attr_row_frame.grid_columnconfigure(0, weight=1) # Attribute name takes most space
+
+                # Attribute Name
+                attr_label = ctk.CTkLabel(attr_row_frame, text=f"{idx+1}. {attr_name}", 
+                                          font=self.THEME["font"]["main"], 
+                                          text_color=self.THEME["color"]["text_primary"],
+                                          anchor="w")
+                attr_label.grid(row=0, column=0, sticky="ew", padx=(0, 5))
+
+                # Up button
+                up_button = ctk.CTkButton(attr_row_frame, text="▲", width=30, height=24,
+                                          fg_color=self.THEME["color"]["background_main"],
+                                          text_color=self.THEME["color"]["text_primary"],
+                                          hover_color=self.THEME["color"]["border"],
+                                          command=lambda a=attr_name: self.move_priority_attr(a, -1))
+                up_button.grid(row=0, column=1, padx=(0, 2))
+                if idx == 0: up_button.configure(state="disabled")
+
+                # Down button
+                down_button = ctk.CTkButton(attr_row_frame, text="▼", width=30, height=24,
+                                            fg_color=self.THEME["color"]["background_main"],
+                                            text_color=self.THEME["color"]["text_primary"],
+                                            hover_color=self.THEME["color"]["border"],
+                                            command=lambda a=attr_name: self.move_priority_attr(a, 1))
+                down_button.grid(row=0, column=2, padx=(0, 2))
+                if idx == len(self.ordered_prioritized_attrs) - 1: down_button.configure(state="disabled")
+
+                # Remove button
+                remove_button = ctk.CTkButton(attr_row_frame, text="✕", width=30, height=24,
+                                              fg_color="#FF4500", # Red color for remove
+                                              text_color=self.THEME["color"]["text_primary"],
+                                              hover_color="#DC143C",
+                                              command=lambda a=attr_name: self.remove_priority_attr(a))
+                remove_button.grid(row=0, column=3)
+        else:
+            self.priority_attrs_container.grid_remove() # Hide container if checkbox is unchecked
+            self.ordered_prioritized_attrs.clear() # Clear ordered list when disabled
+
+    def move_priority_attr(self, attr_name: str, direction: int):
+        """Moves an attribute up or down in the ordered prioritized list."""
+        if attr_name not in self.ordered_prioritized_attrs:
+            return
+
+        current_idx = self.ordered_prioritized_attrs.index(attr_name)
+        new_idx = current_idx + direction
+
+        if 0 <= new_idx < len(self.ordered_prioritized_attrs):
+            self.ordered_prioritized_attrs[current_idx], self.ordered_prioritized_attrs[new_idx] = \
+                self.ordered_prioritized_attrs[new_idx], self.ordered_prioritized_attrs[current_idx]
+            self.update_priority_attrs_ui()
+
+    def remove_priority_attr(self, attr_name: str):
+        """Removes an attribute from the ordered prioritized list."""
+        if attr_name in self.ordered_prioritized_attrs:
+            self.ordered_prioritized_attrs.remove(attr_name)
+            self.selected_attributes.discard(attr_name) # Also deselect from pill buttons
+            if attr_name in self.attribute_buttons:
+                self.attribute_buttons[attr_name].configure(fg_color=self.THEME["color"]["background_secondary"])
+            self.update_priority_attrs_ui()
+            self.update_filter_status() # Update warning status
+
     def apply_preset(self, preset_name: str):
         attributes_str = self.presets.get(preset_name, "")
         preset_attributes = set()
@@ -997,15 +1121,29 @@ class App(ctk.CTk):
                 if attr in self.all_attributes:
                     preset_attributes.add(attr)
 
-        # Deselect all currently selected attributes
+        # Clear current selections and ordered list
         for attr in list(self.selected_attributes):
-            if attr in self.attribute_buttons:
-                self.toggle_attribute(attr)
+            self.toggle_attribute(attr) # This will remove from selected_attributes and ordered_prioritized_attrs
 
-        # Select attributes from the preset
-        for attr in preset_attributes:
-            if attr in self.attribute_buttons:
-                self.toggle_attribute(attr)
+        # Select attributes from the preset, adding to ordered list in preset's string order
+        # Assuming attributes_str preserves a meaningful order if it's used for priority
+        if self.priority_order_checkbox.get() == 1 and attributes_str:
+            # If priority mode is on, populate ordered_prioritized_attrs directly from preset string order
+            self.ordered_prioritized_attrs.clear()
+            for attr in temp_attributes: # Use temp_attributes which is already ordered
+                if attr in self.all_attributes and attr not in self.ordered_prioritized_attrs and len(self.ordered_prioritized_attrs) < 6:
+                    self.ordered_prioritized_attrs.append(attr)
+                    self.selected_attributes.add(attr) # Ensure it's marked as selected
+                    if attr in self.attribute_buttons:
+                        self.attribute_buttons[attr].configure(fg_color="#1F6AA5")
+        else:
+            # Fallback to normal selection behavior if priority mode is off or no string
+            for attr in preset_attributes:
+                if attr not in self.selected_attributes: # Only toggle if not already selected
+                    self.toggle_attribute(attr)
+        
+        self.update_filter_status()
+        self.update_priority_attrs_ui()
 
     def save_preset(self):
         lang_dict = self.translations[self.current_language]
@@ -1049,6 +1187,8 @@ class App(ctk.CTk):
         interface_name = self.interface_map[selected_interface_display]
         category = self.category_menu.get()
         attributes = list(self.selected_attributes)
+        prioritized_attrs = self.ordered_prioritized_attrs if self.priority_order_checkbox.get() == 1 else []
+        priority_order_mode = self.priority_order_checkbox.get() == 1
 
         self.log_textbox.configure(state="normal")
         self.log_textbox.delete("1.0", "end")
@@ -1075,6 +1215,8 @@ class App(ctk.CTk):
             interface_name=interface_name,
             category=category,
             attributes=attributes,
+            prioritized_attrs=prioritized_attrs,
+            priority_order_mode=priority_order_mode,
             on_data_captured_callback=self.enable_rescreening,
             progress_callback=self.progress_callback,
             on_results_callback=self.results_callback # Pass results callback
@@ -1132,12 +1274,14 @@ class App(ctk.CTk):
         
         category = self.category_menu.get()
         attributes = list(self.selected_attributes)
+        prioritized_attrs = self.ordered_prioritized_attrs if self.priority_order_checkbox.get() == 1 else []
+        priority_order_mode = self.priority_order_checkbox.get() == 1
         
         logging.info("=== User requested rescreening with new conditions... ===")
         
         threading.Thread(
             target=self.monitor_instance.rescreen_modules,
-            args=(category, attributes),
+            args=(category, attributes, prioritized_attrs, priority_order_mode),
             daemon=True
         ).start()
     
