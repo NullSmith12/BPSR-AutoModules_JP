@@ -57,7 +57,7 @@ class App(ctk.CTk):
                 "main": ("Segoe UI", 14),
                 "title": ("Segoe UI", 24, "bold"),
                 "subtitle": ("Segoe UI", 16, "bold"),
-                "small": ("Segoe UI", 11)
+                "small": ("Segoe UI", 12)
             }
         }
         # --- FIN DE TEMA ---
@@ -67,7 +67,7 @@ class App(ctk.CTk):
         self.configure(fg_color=self.THEME["color"]["background_main"])
         self.iconbitmap("icon.ico")
         self.attributes("-topmost", True)
-        self.geometry("1280x1080")
+        self.geometry("1100x1070")
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         # --- Load Icon Font ---
@@ -92,9 +92,9 @@ class App(ctk.CTk):
         self.grid_rowconfigure(0, weight=1) # Main row for all content
 
         self.main_frame = ctk.CTkFrame(self, fg_color="transparent") # Hazlo transparente para que se vea el fondo de la ventana
-        self.main_frame.grid(row=0, column=0, padx=20, pady=20, sticky="nsew") # Aumenta el padding
-        self.main_frame.grid_columnconfigure(0, weight=1)
-        self.main_frame.grid_columnconfigure(1, weight=0) # Column for social links
+        self.main_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        self.main_frame.grid_columnconfigure(0, weight=1) # Columna para el frame de botones de control (izquierda)
+        self.main_frame.grid_columnconfigure(1, weight=1) # Columna para el frame de instrucciones (derecha)
 
         # --- Language Selection ---
         self.translations = {
@@ -114,35 +114,34 @@ class App(ctk.CTk):
                 "delete_preset_title": "Delete Preset",
                 "delete_preset_prompt": "Are you sure you want to delete the preset '{preset_name}'?",
                 "save": "💾 Save",
-                "delete": "🗑️ Delete"
-            },
-            "es": {
-                "select_interface": "Selecciona la Interfaz de Red:",
-                "select_module_type": "Selecciona el Tipo de Módulo:",
-                "filter_attributes": "Filtrar Atributos (separados por coma):",
-                "select_preset": "Seleccionar Atributos de Filtro Predefinidos:",
-                "recommended_combos": "Las combinaciones recomendadas solo mostrarán los atributos filtrados anteriormente, se recomienda rellenar todos los atributos tolerables.",
-                "dynamic_instruction_1": "Antes de presionar el botón ",
-                "dynamic_instruction_2": " mueve tu personaje a un lugar con pocos jugadores a tu alrededor.",
-                "waiting_for_modules": "Espera a que combine los Modulos",
-                "change_channel_instruction": "Cambia de canal dentro del juego para comenzar a procesar módulos.",
-                "refilter": "🔍 Refiltrar",
-                "save_preset_title": "Guardar Preset",
-                "save_preset_prompt": "Introduce un nombre para la selección de atributos actual:",
-                "delete_preset_title": "Eliminar Preset",
-                "delete_preset_prompt": "¿Estás seguro de que quieres eliminar el preset '{preset_name}'?",
-                "save": "💾 Guardar",
-                "delete": "🗑️ Eliminar",
-                "filter_warning": "⚠️ Debes seleccionar al menos 2 filtros para que funcione ⚠️",
-                "enable_priority_ordering": "Activar Modo de Ordenamiento por Prioridad (máx. 6 atributos)",
-                "select_priority_attrs": "Selecciona atributos para priorizar (máx. 6)."
-            }
+            "delete": "🗑️ Delete"
+        },
+        "es": {
+            "select_interface": "Selecciona la Interfaz de Red:",
+            "select_module_type": "Selecciona el Tipo de Módulo:",
+            "filter_attributes": "Filtrar Atributos (separados por coma):",
+            "select_preset": "Seleccionar Atributos de Filtro Predefinidos:",
+            "recommended_combos": "Las combinaciones recomendadas solo mostrarán los atributos filtrados anteriormente, se recomienda rellenar todos los atributos tolerables.",
+            "dynamic_instruction_1": "Antes de presionar el botón ",
+            "dynamic_instruction_2": " mueve tu personaje a un lugar con pocos jugadores a tu alrededor.",
+            "waiting_for_modules": "Espera a que combine los Modulos",
+            "change_channel_instruction": "Cambia de canal dentro del juego para comenzar a procesar módulos.",
+            "refilter": "🔍 Refiltrar",
+            "save_preset_title": "Guardar Preset",
+            "save_preset_prompt": "Introduce un nombre para la selección de atributos actual:",
+            "delete_preset_title": "Eliminar Preset",
+            "delete_preset_prompt": "¿Estás seguro de que quieres eliminar el preset '{preset_name}'?",
+            "save": "💾 Guardar",
+            "delete": "🗑️ Eliminar",
+            "enable_priority_ordering": "Activar Modo de Ordenamiento por Prioridad (máx. 6 atributos)",
+            "select_priority_attrs": "Selecciona atributos para priorizar (máx. 6)."
+        }
         }
         self.current_language = "en"
 
         # --- Title Frame ---
         title_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        title_frame.grid(row=0, column=0, pady=(10, 5), sticky="w", padx=10)
+        title_frame.grid(row=0, column=0, pady=(5, 2), sticky="w", padx=5)
 
         app_icon_img = ctk.CTkImage(Image.open("icon.png"), size=(40, 40))
         app_icon = ctk.CTkLabel(title_frame, image=app_icon_img, text="")
@@ -154,42 +153,44 @@ class App(ctk.CTk):
         self.title_label.pack(side="left")
 
         language_menu = ctk.CTkOptionMenu(title_frame, values=["English", "Español"], command=self.change_language)
-        language_menu.pack(side="left", padx=20)
+        language_menu.pack(side="left", padx=10)
         language_menu.set("English")
 
 
         # --- Social Media Links ---
         social_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        social_frame.grid(row=0, column=1, pady=(10, 5), sticky="e")
+        social_frame.grid(row=0, column=1, pady=(5, 2), sticky="e")
 
         kick_img = ctk.CTkImage(Image.open("Icons/kick.png"), size=(24, 24))
         kick_icon = ctk.CTkLabel(social_frame, image=kick_img, text="", cursor="hand2")
-        kick_icon.pack(side="left", padx=5)
+        kick_icon.pack(side="left", padx=2)
         kick_icon.bind("<Button-1>", lambda e: webbrowser.open_new("https://kick.com/mrsnakevt"))
 
         youtube_img = ctk.CTkImage(Image.open("Icons/youtube.png"), size=(24, 24))
         youtube_icon = ctk.CTkLabel(social_frame, image=youtube_img, text="", cursor="hand2")
-        youtube_icon.pack(side="left", padx=5)
+        youtube_icon.pack(side="left", padx=2)
         youtube_icon.bind("<Button-1>", lambda e: webbrowser.open_new("https://www.youtube.com/@MrSnake_VT"))
 
         x_img = ctk.CTkImage(Image.open("Icons/x-twitter.png"), size=(24, 24))
         x_icon = ctk.CTkLabel(social_frame, image=x_img, text="", cursor="hand2")
-        x_icon.pack(side="left", padx=5)
+        x_icon.pack(side="left", padx=2)
         x_icon.bind("<Button-1>", lambda e: webbrowser.open_new("https://x.com/MrSnakeVT"))
 
         # --- Filter Frame (initially visible) ---
         self.filters_frame = ctk.CTkFrame(self.main_frame, fg_color=self.THEME["color"]["background_secondary"], corner_radius=15)
-        self.filters_frame.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
-        self.filters_frame.grid_columnconfigure(0, weight=1)
-        self.filters_frame.grid_columnconfigure(1, weight=1)
-        self.filters_frame.grid_columnconfigure(2, weight=1)
-        self.filters_frame.grid_columnconfigure(3, weight=1)
+        self.filters_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
+        # Reconfiguración de columnas para self.filters_frame
+        self.filters_frame.grid_columnconfigure(0, weight=1) # Columna para Category
+        self.filters_frame.grid_columnconfigure(1, weight=1) # Columna para Category Menu
+        self.filters_frame.grid_columnconfigure(2, weight=1) # Columna para Interface Label
+        self.filters_frame.grid_columnconfigure(3, weight=1) # Columna para Interface Menu
+        self.filters_frame.grid_columnconfigure(4, weight=1) # Nueva columna para priority_ordering_frame
 
         # Column 0
         self.label_category = ctk.CTkLabel(self.filters_frame, text="Select Module Type:", 
                                    font=self.THEME["font"]["main"],
                                    text_color=self.THEME["color"]["text_primary"])
-        self.label_category.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="w")
+        self.label_category.grid(row=0, column=0, padx=5, pady=(5, 2), sticky="w")
         self.category_menu = ctk.CTkOptionMenu(
             self.filters_frame, values=["All", "Attack", "Guard", "Support"],
             fg_color=self.THEME["color"]["background_main"], # Fondo interior
@@ -200,14 +201,14 @@ class App(ctk.CTk):
             dropdown_hover_color=self.THEME["color"]["border"],
             corner_radius=8
         )
-        self.category_menu.grid(row=0, column=1, padx=10, pady=5, sticky="ew")
+        self.category_menu.grid(row=0, column=1, padx=5, pady=2, sticky="ew")
         self.category_menu.set("All")
         self.category_menu.configure(state="normal") # Ensure it\'s enabled initially
 
         self.label_interface = ctk.CTkLabel(self.filters_frame, text="Select Network Interface:",
                                     font=self.THEME["font"]["main"],
                                     text_color=self.THEME["color"]["text_primary"])
-        self.label_interface.grid(row=0, column=2, padx=10, pady=(10, 5), sticky="w")
+        self.label_interface.grid(row=0, column=2, padx=5, pady=(5, 2), sticky="w")
         self.interface_menu = ctk.CTkOptionMenu(
             self.filters_frame, values=list(self.interface_map.keys()),
             fg_color=self.THEME["color"]["background_main"],
@@ -218,11 +219,11 @@ class App(ctk.CTk):
             dropdown_hover_color=self.THEME["color"]["border"],
             corner_radius=8
         )
-        self.interface_menu.grid(row=0, column=3, padx=10, pady=5, sticky="ew")
+        self.interface_menu.grid(row=0, column=3, padx=5, pady=2, sticky="ew")
 
         # --- Presets Frame ---
         self.presets_frame = ctk.CTkFrame(self.filters_frame, fg_color=self.THEME["color"]["background_secondary"], corner_radius=15)
-        self.presets_frame.grid(row=1, column=0, columnspan=4, padx=10, pady=(10,0), sticky="ew")
+        self.presets_frame.grid(row=1, column=0, columnspan=4, padx=5, pady=(5,0), sticky="ew")
         self.presets_frame.grid_columnconfigure(0, weight=0)
         self.presets_frame.grid_columnconfigure(1, weight=1)
         self.presets_frame.grid_columnconfigure(2, weight=0)
@@ -231,7 +232,7 @@ class App(ctk.CTk):
         self.label_presets = ctk.CTkLabel(self.presets_frame, text="Select Preset:",
                                    font=self.THEME["font"]["main"],
                                    text_color=self.THEME["color"]["text_primary"])
-        self.label_presets.grid(row=0, column=0, padx=(10, 5), pady=5, sticky="w")
+        self.label_presets.grid(row=0, column=0, padx=(5, 2), pady=2, sticky="w")
 
         self.presets_menu = ctk.CTkOptionMenu(
             self.presets_frame, command=self.apply_preset,
@@ -243,35 +244,29 @@ class App(ctk.CTk):
             dropdown_hover_color=self.THEME["color"]["border"],
             corner_radius=8
         )
-        self.presets_menu.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.presets_menu.grid(row=0, column=1, padx=2, pady=2, sticky="ew")
 
         self.save_preset_button = ctk.CTkButton(self.presets_frame, text="", command=self.save_preset, width=80, corner_radius=15, 
                                                 fg_color=self.THEME["color"]["background_secondary"], 
                                                 text_color=self.THEME["color"]["text_primary"],
                                                 hover_color=self.THEME["color"]["border"],
                                                 border_width=0)
-        self.save_preset_button.grid(row=0, column=2, padx=5, pady=5)
+        self.save_preset_button.grid(row=0, column=2, padx=2, pady=2)
 
         self.delete_preset_button = ctk.CTkButton(self.presets_frame, text="", command=self.delete_preset, width=80, corner_radius=15, 
                                                   fg_color=self.THEME["color"]["background_secondary"], 
                                                   text_color=self.THEME["color"]["text_primary"],
                                                   hover_color=self.THEME["color"]["border"],
                                                   border_width=0)
-        self.delete_preset_button.grid(row=0, column=3, padx=5, pady=5)
+        self.delete_preset_button.grid(row=0, column=3, padx=2, pady=2)
 
         self.attributes_buttons_frame = ctk.CTkFrame(self.filters_frame, fg_color="transparent")
-        # Advertencia de filtros
-        self.filter_warning_frame = ctk.CTkFrame(self.filters_frame, fg_color="transparent")
-        self.filter_warning_frame.grid(row=2, column=0, columnspan=4, padx=10, pady=(0, 5), sticky="ew")
-        self.filter_warning_frame.grid_columnconfigure(0, weight=1)
+        # Asegurarse de que las 5 columnas internas no se estiren
+        for i in range(5): # Para 5 columnas lógicas (0 a 4)
+            self.attributes_buttons_frame.grid_columnconfigure(i, weight=0)
 
-        self.filter_warning_label = ctk.CTkLabel(self.filter_warning_frame, 
-                                                text="", 
-                                                font=self.THEME["font"]["main"], 
-                                                text_color="#FFCC00") # Amarillo
-        self.filter_warning_label.pack_forget() # Hide by default
-
-        self.attributes_buttons_frame.grid(row=3, column=0, columnspan=4, padx=10, pady=10, sticky="ew")
+        # Mover attributes_buttons_frame a la fila 2 para eliminar el espacio de la advertencia
+        self.attributes_buttons_frame.grid(row=2, column=0, columnspan=4, padx=5, pady=5)
 
         self.all_attributes = [
             "DMG Stack", "Agile", "Life Condense", "First Aid", "Life Wave", "Life Steal", 
@@ -296,15 +291,16 @@ class App(ctk.CTk):
             hover_color=self.THEME["color"]["border"], # Un color sutil para el hover
             border_width=1, # Borde blanco
             border_color="white", # Color del borde blanco
-            corner_radius=15 # ¡Muy importante para la forma de píldora!
+            corner_radius=8, # ¡Muy importante para la forma de píldora!
+            font=self.THEME["font"]["small"] # Reduce la fuente
         )
-        all_button.grid(row=0, column=0, padx=5, pady=5)
+        all_button.grid(row=0, column=0, padx=1, pady=1)
         self.attribute_buttons["All"] = all_button
 
         # --- Create attribute buttons ---
         row, col = 0, 1
         for attr in self.all_attributes:
-            if col > 6:  # Adjust number of columns as needed
+            if col > 4:  # Ajusta el número de columnas a 5
                 col = 0
                 row += 1
             
@@ -315,17 +311,19 @@ class App(ctk.CTk):
                 fg_color=self.THEME["color"]["background_secondary"], # Color inactivo
                 text_color=self.THEME["color"]["text_primary"],
                 hover_color=self.THEME["color"]["border"], # Un color sutil para el hover
-                border_width=1, # Borde blanco
-                border_color="white", # Color del borde blanco
-                corner_radius=15 # ¡Muy importante para la forma de píldora!
-            )
-            button.grid(row=row, column=col, padx=5, pady=5)
+            border_width=1, # Borde blanco
+            border_color="white", # Color del borde blanco
+            corner_radius=8, # ¡Muy importante para la forma de píldora!
+            font=self.THEME["font"]["small"] # Reduce la fuente
+        )
+            button.grid(row=row, column=col, padx=1, pady=1)
             self.attribute_buttons[attr] = button
             col += 1
 
         # --- Priority Ordering Controls ---
+        # Reubicar este frame para que aparezca a la derecha de los botones de atributos
         self.priority_ordering_frame = ctk.CTkFrame(self.filters_frame, fg_color=self.THEME["color"]["background_secondary"], corner_radius=15)
-        self.priority_ordering_frame.grid(row=4, column=0, columnspan=4, padx=10, pady=(10,0), sticky="ew")
+        self.priority_ordering_frame.grid(row=2, column=4, padx=5, pady=(5,0), sticky="nsew") # Colocar en la fila 2, columna 4
         self.priority_ordering_frame.grid_columnconfigure(0, weight=1)
 
         self.priority_order_checkbox = ctk.CTkCheckBox(
@@ -335,76 +333,68 @@ class App(ctk.CTk):
             text_color=self.THEME["color"]["text_primary"],
             command=self.update_priority_attrs_ui
         )
-        self.priority_order_checkbox.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        self.priority_order_checkbox.grid(row=0, column=0, padx=5, pady=2, sticky="w")
 
         self.priority_attrs_container = ctk.CTkFrame(self.priority_ordering_frame, fg_color="transparent")
-        self.priority_attrs_container.grid(row=1, column=0, padx=5, pady=5, sticky="ew")
+        self.priority_attrs_container.grid(row=1, column=0, padx=2, pady=2, sticky="ew")
         self.priority_attrs_container.grid_columnconfigure(0, weight=1)
         # This container will hold the ordered list of attributes with up/down/remove buttons
         self.update_priority_attrs_ui() # Initial call to set visibility
 
-        self.control_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        self.control_frame.grid(row=5, column=0, columnspan=2, pady=10)
+        # Frame para los botones de control (Start, Stop, Refilter)
+        self.control_buttons_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        self.control_buttons_frame.grid(row=5, column=0, padx=5, pady=5, sticky="w")
 
         play_icon = ctk.CTkImage(Image.open("Icons/play.png"), size=(16, 16))
-        self.start_button = ctk.CTkButton(self.control_frame, text="Start Monitoring", image=play_icon, command=self.start_monitoring,
+        self.start_button = ctk.CTkButton(self.control_buttons_frame, text="Start Monitoring", image=play_icon, command=self.start_monitoring,
                                   corner_radius=8, 
                                   fg_color="#1F6AA5") # Mantén el azul por ahora o cámbialo a un color de acento
-        self.start_button.pack(side="left", padx=10)
+        self.start_button.pack(side="left", padx=5)
 
         stop_icon = ctk.CTkImage(Image.open("Icons/stop.png"), size=(16, 16))
-        self.stop_button = ctk.CTkButton(self.control_frame, text="Stop Monitoring", image=stop_icon, command=self.stop_monitoring, state="disabled",
+        self.stop_button = ctk.CTkButton(self.control_buttons_frame, text="Stop Monitoring", image=stop_icon, command=self.stop_monitoring, state="disabled",
                                   corner_radius=8, 
                                   fg_color=self.THEME["color"]["background_secondary"],
                                   text_color=self.THEME["color"]["text_primary"],
                                   hover_color=self.THEME["color"]["border"],
                                   border_width=0)
-        self.stop_button.pack(side="left", padx=10)
+        self.stop_button.pack(side="left", padx=5)
         
-        self.rescreen_button = ctk.CTkButton(self.control_frame, text="\U00002700 Refiltrar", command=self.rescreen_results, state="disabled", font=self.fa_font,
+        self.rescreen_button = ctk.CTkButton(self.control_buttons_frame, text="\U00002700 Refiltrar", command=self.rescreen_results, state="disabled", font=self.fa_font,
                                   corner_radius=8, 
                                   fg_color=self.THEME["color"]["background_secondary"],
                                   text_color=self.THEME["color"]["text_primary"],
                                   hover_color=self.THEME["color"]["border"],
                                   border_width=1, # Borde blanco
                                   border_color="white") # Color del borde blanco
-        self.rescreen_button.pack(side="left", padx=10)
+        self.rescreen_button.pack(side="left", padx=5)
 
-        # Button to toggle the console
-        self.toggle_console_button = ctk.CTkButton(self.control_frame, text=">", command=self.toggle_console, width=30,
-                                  corner_radius=8, 
-                                  fg_color=self.THEME["color"]["background_secondary"],
-                                  text_color=self.THEME["color"]["text_primary"],
-                                  hover_color=self.THEME["color"]["border"],
-                                  border_width=0)
-        self.toggle_console_button.pack(side="left", padx=10)
-
-        # --- Dynamic Instructions ---
+        # --- Dynamic Instructions (movido a la derecha) ---
         self.instruction_frame = ctk.CTkFrame(self.main_frame, fg_color=self.THEME["color"]["background_secondary"], corner_radius=15)
-        self.instruction_frame.grid(row=6, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
+        self.instruction_frame.grid(row=5, column=1, padx=5, pady=5, sticky="e")
         
-        self.instruction_icon = ctk.CTkLabel(self.instruction_frame, text="⚠️", font=("Segoe UI Emoji", 20), text_color="#FFCC00") # Yellow warning
-        self.instruction_icon.pack(side="left", padx=(10, 5), pady=5)
+        self.instruction_icon = ctk.CTkLabel(self.instruction_frame, text="⚠️", font=("Segoe UI Emoji", 16), text_color="#FFCC00") # Yellow warning, reduced size
+        self.instruction_icon.pack(side="left", padx=(5, 2), pady=2)
 
         # Frame for complex, multi-part instruction
         self.instruction_text_frame = ctk.CTkFrame(self.instruction_frame, fg_color="transparent")
-        self.instruction_text_frame.pack(side="left", padx=(0, 10), pady=5)
+        self.instruction_text_frame.pack(side="left", padx=(0, 5), pady=2)
 
         self.update_dynamic_instruction()
 
         # Label for simple, single-part instructions
-        self.instruction_label_simple = ctk.CTkLabel(self.instruction_frame, text="", font=self.THEME["font"]["main"], text_color=self.THEME["color"]["text_primary"])
+        self.instruction_label_simple = ctk.CTkLabel(self.instruction_frame, text="", font=self.THEME["font"]["small"], text_color=self.THEME["color"]["text_primary"]) # Using THEME["font"]["small"]
         self.base_instruction_text = "" # For animation
 
         # --- Distribution Filter ---
         self.dist_filter_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        self.dist_filter_frame.grid(row=6, column=0, columnspan=2, padx=10, pady=(5, 0), sticky="ew")
+        self.dist_filter_frame.grid(row=6, column=0, columnspan=2, padx=5, pady=(2, 0), sticky="ew")
         self.dist_filter_frame.grid_remove() # Hide initially
 
         self.label_dist_filter = ctk.CTkLabel(self.dist_filter_frame, text="Attr. Distribution:",
                                       font=self.THEME["font"]["main"],
                                       text_color=self.THEME["color"]["text_primary"])
-        self.label_dist_filter.pack(side="left", padx=(10, 10))
+        self.label_dist_filter.pack(side="left", padx=(5, 5))
 
         self.dist_filter_buttons: Dict[str, ctk.CTkButton] = {}
         filters = ["All", "Lv.5", "Lv.5/Lv.5", "Lv.5/Lv.6", "Lv.6/Lv.6"]
@@ -419,19 +409,19 @@ class App(ctk.CTk):
                 border_width=0,
                 corner_radius=15
             )
-            btn.pack(side="left", padx=5)
+            btn.pack(side="left", padx=2)
         self.dist_filter_buttons[f] = btn
 
         # --- Console Panel ---
         self.console_frame = ctk.CTkFrame(self, width=400)
-        self.console_frame.grid(row=0, column=1, rowspan=2, padx=10, pady=10, sticky="ns")
+        self.console_frame.grid(row=0, column=1, rowspan=2, padx=5, pady=5, sticky="ns")
         self.console_frame.grid_remove() # Hide by default
 
         self.console_frame.grid_rowconfigure(0, weight=1)
         self.console_frame.grid_columnconfigure(0, weight=1)
 
         self.console_frame = ctk.CTkFrame(self, width=400, fg_color=self.THEME["color"]["background_secondary"], corner_radius=15)
-        self.console_frame.grid(row=0, column=1, rowspan=2, padx=10, pady=10, sticky="ns")
+        self.console_frame.grid(row=0, column=1, rowspan=2, padx=5, pady=5, sticky="ns")
         self.console_frame.grid_remove() # Hide by default
 
         self.console_frame.grid_rowconfigure(0, weight=1)
@@ -443,13 +433,13 @@ class App(ctk.CTk):
                                   border_width=1,
                                   text_color=self.THEME["color"]["text_primary"],
                                   font=self.THEME["font"]["main"])
-        self.log_textbox.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
+        self.log_textbox.grid(row=0, column=0, padx=2, pady=2, sticky="nsew")
 
         # --- Status Bar ---
         self.status_frame = ctk.CTkFrame(self, fg_color="transparent", height=30)
-        self.status_frame.grid(row=1, column=0, columnspan=2, padx=10, pady=(0, 10), sticky="ew")
+        self.status_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=(0, 5), sticky="ew")
         self.status_label = ctk.CTkLabel(self.status_frame, text="Status: Idle", anchor="w", text_color=self.THEME["color"]["text_secondary"], font=self.THEME["font"]["main"])
-        self.status_label.pack(side="left", padx=10, pady=2)
+        self.status_label.pack(side="left", padx=5, pady=1)
 
         self.log_queue = queue.Queue()
         logger_instance = logging.getLogger()
@@ -468,32 +458,32 @@ class App(ctk.CTk):
                                             fg_color="transparent",
                                             label_font=self.THEME["font"]["subtitle"],
                                             label_text_color=self.THEME["color"]["text_primary"])
-        self.results_frame.grid(row=7, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+        self.results_frame.grid(row=7, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
         self.results_frame.grid_columnconfigure(0, weight=1)
         self.results_frame.grid_columnconfigure(1, weight=1)
         self.main_frame.grid_rowconfigure(7, weight=1) # Allow results frame to expand
 
         # --- Pagination Controls ---
         self.pagination_frame = ctk.CTkFrame(self.main_frame)
-        self.pagination_frame.grid(row=8, column=0, columnspan=2, pady=(5, 0), sticky="ew")
+        self.pagination_frame.grid(row=8, column=0, columnspan=2, pady=(2, 0), sticky="ew")
         self.pagination_frame.grid_columnconfigure((0, 2), weight=1) # Center the label
         self.pagination_frame.grid_remove() # Hide initially
 
         self.prev_button = ctk.CTkButton(self.pagination_frame, text="< Previous", command=self.previous_page, state="disabled")
-        self.prev_button.grid(row=0, column=0, sticky="e", padx=20)
+        self.prev_button.grid(row=0, column=0, sticky="e", padx=10)
 
         self.page_label = ctk.CTkLabel(self.pagination_frame, text="Page 1 / 1")
-        self.page_label.grid(row=0, column=1, padx=20)
+        self.page_label.grid(row=0, column=1, padx=10)
 
         self.next_button = ctk.CTkButton(self.pagination_frame, text="Next >", command=self.next_page, state="disabled")
-        self.next_button.grid(row=0, column=2, sticky="w", padx=20)
+        self.next_button.grid(row=0, column=2, sticky="w", padx=10)
 
         # --- Loading Animation ---
         self.loading_frame = ctk.CTkFrame(self.main_frame)
         self.loading_label = ctk.CTkLabel(self.loading_frame, text="Generating combinations, please wait...", font=("Arial", 18))
-        self.loading_label.pack(pady=20, padx=20)
+        self.loading_label.pack(pady=10, padx=10)
         self.loading_animation_label = ctk.CTkLabel(self.loading_frame, text="", font=("Courier", 20))
-        self.loading_animation_label.pack(pady=10)
+        self.loading_animation_label.pack(pady=5)
         self.animation_chars = ["|", "/", "-", "\\"]
         self.animation_index = 0
         self._animation_job = None
@@ -523,8 +513,8 @@ class App(ctk.CTk):
         self.delete_preset_button.configure(text=lang_dict.get("delete", "🗑️ Delete"))
         
         self.update_dynamic_instruction()
-        self.update_filter_warning_text()
-        
+        # self.update_filter_warning_text() # Ya no es necesario
+
         # Update instruction text if it\'s currently visible
         if self.instruction_label_simple.winfo_viewable():
             if "Waiting" in self.base_instruction_text:
@@ -533,22 +523,16 @@ class App(ctk.CTk):
                  self.base_instruction_text = lang_dict["change_channel_instruction"]
             self.instruction_label_simple.configure(text=self.base_instruction_text)
         
-        self.update_filter_status() # Update warning text after language change
+        # self.update_filter_status() # Ya no es necesario, el warning frame fue eliminado
 
 
     def update_filter_warning_text(self):
-        lang_dict = self.translations[self.current_language]
-        # This function is now superseded by update_filter_status for dynamic display
-        # but is kept to provide the raw text if needed elsewhere.
-        return lang_dict.get("filter_warning", "⚠️ You must select at least 2 filters to work ⚠️")
+        # Esta función ya no es necesaria para mostrar advertencias dinámicas.
+        return "" # Siempre devuelve una cadena vacía
 
     def update_filter_status(self):
-        lang_dict = self.translations[self.current_language]
-        if len(self.selected_attributes) < 2:
-            self.filter_warning_label.configure(text=self.update_filter_warning_text())
-            self.filter_warning_label.pack(pady=5) # Make visible
-        else:
-            self.filter_warning_label.pack_forget() # Hide
+        # Esta función ya no tiene ninguna acción ya que el warning frame fue eliminado.
+        pass
 
     def update_dynamic_instruction(self):
         # Clear previous widgets
@@ -557,9 +541,9 @@ class App(ctk.CTk):
 
         lang_dict = self.translations[self.current_language]
         
-        ctk.CTkLabel(self.instruction_text_frame, text=lang_dict["dynamic_instruction_1"], font=("Segoe UI", 14)).pack(side="left")
-        ctk.CTkLabel(self.instruction_text_frame, text="Start Monitoring", font=("Segoe UI", 14, "bold"), fg_color="#1F6AA5", corner_radius=5).pack(side="left", padx=4)
-        ctk.CTkLabel(self.instruction_text_frame, text=lang_dict["dynamic_instruction_2"], font=("Segoe UI", 14)).pack(side="left")
+        ctk.CTkLabel(self.instruction_text_frame, text=lang_dict["dynamic_instruction_1"], font=self.THEME["font"]["small"]).pack(side="left")
+        ctk.CTkLabel(self.instruction_text_frame, text="Start Monitoring", font=("Segoe UI", 12, "bold"), fg_color="#1F6AA5", corner_radius=5).pack(side="left", padx=2) # Reduced font size here as well
+        ctk.CTkLabel(self.instruction_text_frame, text=lang_dict["dynamic_instruction_2"], font=self.THEME["font"]["small"]).pack(side="left")
 
 
     def load_font_awesome(self) -> Optional[CTkFont]:
@@ -626,16 +610,6 @@ class App(ctk.CTk):
                 except Exception as e:
                     logging.error(f"Failed to load attribute icon {filename}: {e}")
         return images
-
-    def toggle_console(self):
-        if self.console_frame.winfo_viewable():
-            self.console_frame.grid_remove()
-            self.toggle_console_button.configure(text=">")
-            self.grid_columnconfigure(1, weight=0)
-        else:
-            self.console_frame.grid()
-            self.toggle_console_button.configure(text="<")
-            self.grid_columnconfigure(1, weight=1)
 
     def toggle_filters(self):
         if self.filters_frame.winfo_viewable():
@@ -711,7 +685,7 @@ class App(ctk.CTk):
                 if "识别到游戏服务器" in record:
                     self.instruction_text_frame.pack_forget()
                     if not self.instruction_label_simple.winfo_viewable():
-                        self.instruction_label_simple.pack(side="left", padx=(0, 10), pady=5)
+                        self.instruction_label_simple.pack(side="left", padx=(0, 5), pady=2)
                     
                     self.instruction_icon.configure(text="🔄", text_color="#1E90FF") # Blue sync icon
                     self.base_instruction_text = self.translations[self.current_language]["waiting_for_modules"]
@@ -807,11 +781,11 @@ class App(ctk.CTk):
                               border_color=self.THEME["color"]["border"], # Borde sutil
                               border_width=1, 
                               corner_radius=15)
-            solution_frame.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
+            solution_frame.grid(row=row, column=col, padx=5, pady=5, sticky="nsew")
             solution_frame.grid_columnconfigure(0, weight=1)
 
             header_frame = ctk.CTkFrame(solution_frame, fg_color="transparent")
-            header_frame.grid(row=0, column=0, padx=10, pady=(5, 10), sticky="ew")
+            header_frame.grid(row=0, column=0, padx=5, pady=(2, 5), sticky="ew")
             header_frame.grid_columnconfigure(0, weight=1)
             header_frame.grid_columnconfigure(1, weight=1)
 
@@ -846,11 +820,11 @@ class App(ctk.CTk):
             stats_label.pack(side="right")
 
             content_frame = ctk.CTkFrame(solution_frame, fg_color="transparent")
-            content_frame.grid(row=1, column=0, padx=10, pady=5, sticky="ew")
+            content_frame.grid(row=1, column=0, padx=5, pady=2, sticky="ew")
             content_frame.grid_columnconfigure(0, weight=1)
 
             modules_container = ctk.CTkFrame(content_frame, fg_color="transparent")
-            modules_container.grid(row=0, column=0, pady=5, sticky="nsew")
+            modules_container.grid(row=0, column=0, pady=2, sticky="nsew")
             
             for j, module in enumerate(solution.modules):
                 modules_container.grid_columnconfigure(j, weight=1)
@@ -867,14 +841,15 @@ class App(ctk.CTk):
                                    fg_color=self.THEME["color"]["background_main"], # Fondo neutro
                                    border_width=1,
                                    border_color=color, # Usa el color de rareza en el borde
-                                   corner_radius=10)
-                module_card.grid(row=0, column=j, padx=5, pady=5, sticky="ns")
+                                   corner_radius=10,
+                                   width=190) # Añadir un ancho fijo para que los textos no se ajusten
+                module_card.grid(row=0, column=j, padx=2, pady=2, sticky="ns")
 
                 img_label = ctk.CTkLabel(module_card, image=self.module_images.get(module.name), text="")
-                img_label.pack(pady=(5, 5), padx=5)
+                img_label.pack(pady=(2, 2), padx=2)
                 
                 attrs_frame = ctk.CTkFrame(module_card, fg_color="transparent")
-                attrs_frame.pack(pady=5, padx=5, anchor="w", fill="x")
+                attrs_frame.pack(pady=2, padx=2, anchor="w", fill="x")
 
                 for part in module.parts:
                     attr_line_frame = ctk.CTkFrame(attrs_frame, fg_color="transparent")
@@ -883,7 +858,7 @@ class App(ctk.CTk):
                     icon = self.attribute_images.get(part.name)
                     if icon:
                         icon_label = ctk.CTkLabel(attr_line_frame, image=icon, text="")
-                        icon_label.pack(side="left", padx=(0, 3))
+                        icon_label.pack(side="left", padx=(0, 2))
 
                     attr_text = f"{part.name}+{part.value}"
                     attrs_label = ctk.CTkLabel(attr_line_frame, text=attr_text, 
@@ -894,10 +869,10 @@ class App(ctk.CTk):
             stats_frame = ctk.CTkFrame(content_frame)
             stats_frame.grid(row=1, column=0, pady=5, sticky="nsew")
 
-            ctk.CTkLabel(stats_frame, text="Attribute Distribution:", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=10, pady=(5, 2))
+            ctk.CTkLabel(stats_frame, text="Attribute Distribution:", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=5, pady=(2, 1))
             
             attr_dist_frame = ctk.CTkFrame(stats_frame, fg_color="transparent")
-            attr_dist_frame.pack(anchor="w", padx=10, pady=2, fill="x")
+            attr_dist_frame.pack(anchor="w", padx=5, pady=1, fill="x")
 
             # Sort attributes by value (Lv) in descending order
             for attr_name, value in sorted(solution.attr_breakdown.items(), key=lambda item: item[1], reverse=True):
@@ -1049,7 +1024,7 @@ class App(ctk.CTk):
 
             for idx, attr_name in enumerate(self.ordered_prioritized_attrs):
                 attr_row_frame = ctk.CTkFrame(self.priority_attrs_container, fg_color="transparent")
-                attr_row_frame.grid(row=idx, column=0, padx=5, pady=2, sticky="ew")
+                attr_row_frame.grid(row=idx, column=0, padx=2, pady=1, sticky="ew")
                 attr_row_frame.grid_columnconfigure(0, weight=1) # Attribute name takes most space
 
                 # Attribute Name
@@ -1065,7 +1040,7 @@ class App(ctk.CTk):
                                           text_color=self.THEME["color"]["text_primary"],
                                           hover_color=self.THEME["color"]["border"],
                                           command=lambda a=attr_name: self.move_priority_attr(a, -1))
-                up_button.grid(row=0, column=1, padx=(0, 2))
+                up_button.grid(row=0, column=1, padx=(0, 1))
                 if idx == 0: up_button.configure(state="disabled")
 
                 # Down button
@@ -1074,7 +1049,7 @@ class App(ctk.CTk):
                                             text_color=self.THEME["color"]["text_primary"],
                                             hover_color=self.THEME["color"]["border"],
                                             command=lambda a=attr_name: self.move_priority_attr(a, 1))
-                down_button.grid(row=0, column=2, padx=(0, 2))
+                down_button.grid(row=0, column=2, padx=(0, 1))
                 if idx == len(self.ordered_prioritized_attrs) - 1: down_button.configure(state="disabled")
 
                 # Remove button
@@ -1198,7 +1173,7 @@ class App(ctk.CTk):
         
         # Update instruction label
         self.instruction_text_frame.pack_forget()
-        self.instruction_label_simple.pack(side="left", padx=(0, 10), pady=5)
+        self.instruction_label_simple.pack(side="left", padx=(0, 5), pady=2)
         self.instruction_icon.configure(text="⚠️", text_color="#FFA500") # Orange warning
         self.base_instruction_text = self.translations[self.current_language]["change_channel_instruction"]
         self.instruction_label_simple.configure(text=self.base_instruction_text)
