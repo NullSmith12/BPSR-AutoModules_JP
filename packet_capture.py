@@ -2,12 +2,47 @@
 网络抓包模块
 """
 
+import os
 import socket
 import struct
 import threading
 import time
 import logging
+from pathlib import Path
+import tempfile
 from typing import Optional, Callable, Dict, Any
+
+
+def _configure_scapy_cache_home() -> None:
+    """
+    Scapy のキャッシュ先をユーザー書き込み可能な場所へ固定する。
+    Windows では ~/.cache 配下の ACL 問題で起動時に落ちることがある。
+    """
+    if os.environ.get("XDG_CACHE_HOME"):
+        return
+
+    candidate_roots = [
+        os.environ.get("LOCALAPPDATA"),
+        tempfile.gettempdir(),
+    ]
+
+    for root in candidate_roots:
+        if not root:
+            continue
+
+        try:
+            cache_home = Path(root) / "BPSR-AutoModules"
+            cache_home.mkdir(parents=True, exist_ok=True)
+            os.environ["XDG_CACHE_HOME"] = str(cache_home)
+            return
+        except OSError:
+            continue
+
+
+_configure_scapy_cache_home()
+
+os.environ.setdefault("PYTHON_ZSTANDARD_IMPORT_POLICY", "cffi")
+
 from scapy.all import sniff, IP, TCP, UDP, Raw
 import zstandard as zstd
 import json
@@ -99,7 +134,7 @@ class PacketCapture:
         self.callback = callback
         self.is_running = True
         
-        logger.info(f"开始抓包，接口: {self.interface or '自动'}")
+        logger.info(f"パケット監視を開始します。インターフェース: {self.interface or '自動'}")
         
         # 在新线程中运行抓包
         capture_thread = threading.Thread(target=self._capture_loop)
@@ -114,7 +149,7 @@ class PacketCapture:
     def stop_capture(self):
         """停止抓包"""
         self.is_running = False
-        logger.info("停止抓包")
+        logger.info("パケット監視を停止しました")
         
     def _capture_loop(self):
         """抓包主循环"""
@@ -127,7 +162,7 @@ class PacketCapture:
                 stop_filter=lambda _: not self.is_running
             )
         except Exception as e:
-            logger.error(f"抓包过程中发生错误: {e}")
+            logger.error(f"パケット監視中にエラーが発生しました: {e}")
             
     def _process_packet(self, packet):
         """处理单个数据包"""
@@ -173,7 +208,7 @@ class PacketCapture:
                     self.current_server = src_server
                     self._clear_tcp_cache()
                     self.tcp_next_seq = seq + len(payload)
-                    logger.info(f'识别到游戏服务器: {src_server}')
+                    logger.info(f'ゲームサーバーを識別しました: {src_server}')
                 else:
                     return  # 不是游戏服务器，跳过
             
@@ -183,7 +218,7 @@ class PacketCapture:
                 
             # TCP流重组逻辑
             if self.tcp_next_seq == -1:
-                logger.error('TCP流重组错误: tcp_next_seq 为 -1')
+                logger.error('TCP ストリーム再構成エラー: tcp_next_seq が -1 です')
                 if len(payload) > 4 and struct.unpack('>I', payload[:4])[0] < 0x0fffff:
                     self.tcp_next_seq = seq
                 return
@@ -246,7 +281,7 @@ class PacketCapture:
                     break
                     
                 if packet_size > 0x0fffff:
-                    logger.error(f"无效的数据包长度: {packet_size}")
+                    logger.error(f"不正なパケット長です: {packet_size}")
                     break
                     
                 # 提取完整数据包
@@ -452,6 +487,6 @@ class PacketCapture:
                 
             # 检查连接超时
             if self.tcp_last_time and current_time - self.tcp_last_time > FRAGMENT_TIMEOUT:
-                logger.warning('无法捕获下一个数据包! 游戏是否已关闭或断开连接?seq: ' + str(self.tcp_next_seq))
+                logger.warning('次のパケットを取得できません。ゲームが終了したか切断された可能性があります。seq: ' + str(self.tcp_next_seq))
                 self.current_server = ''
                 self._clear_tcp_cache()

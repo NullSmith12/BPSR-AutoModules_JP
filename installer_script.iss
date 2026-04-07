@@ -11,21 +11,27 @@ OutputBaseFilename=BPSR Module Optimizer Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-SourceDir=D:\proyectos programacion\AutoModuleEN
-UninstallDisplayIcon={app}\gui_app.exe
+SourceDir=.
+UninstallDisplayIcon={app}\BPSR-AutoModules_JP.exe
 PrivilegesRequired=admin
 DisableProgramGroupPage=yes
 
 [Files]
-Source: "build\exe.win-amd64-3.10\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "npcap-1.83.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
+Source: "dist\gui_app\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "npcap-1.83.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall skipifsourcedoesntexist
 
 [Icons]
-Name: "{autoprograms}\BPSR Module Optimizer"; Filename: "{app}\gui_app.exe"; IconFilename: "{app}\icon.ico"
-Name: "{autodesktop}\BPSR Module Optimizer"; Filename: "{app}\gui_app.exe"; IconFilename: "{app}\icon.ico"; Tasks: desktopicon
+Name: "{autoprograms}\BPSR Module Optimizer"; Filename: "{app}\BPSR-AutoModules_JP.exe"; IconFilename: "{app}\icon.ico"
+Name: "{autodesktop}\BPSR Module Optimizer"; Filename: "{app}\BPSR-AutoModules_JP.exe"; IconFilename: "{app}\icon.ico"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Run]
-Filename: "{tmp}\npcap-1.83.exe"; Parameters: ""; StatusMsg: "Por favor, sigue el asistente para instalar Npcap (requerido para la captura de paquetes)..."; Flags: waituntilterminated
+Filename: "{tmp}\npcap-1.83.exe"; Parameters: ""; StatusMsg: "Npcap をインストールします。画面の案内に従って進めてください (パケット取得に必須です)..."; Flags: waituntilterminated; Check: NpcapInstallerExists
+
+[Code]
+function NpcapInstallerExists: Boolean;
+begin
+  Result := FileExists(ExpandConstant('{tmp}\npcap-1.83.exe'));
+end;

@@ -9,6 +9,13 @@ from dataclasses import dataclass, field
 from copy import deepcopy
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
+from localization import (
+    DEFAULT_LANGUAGE,
+    format_attribute_list,
+    get_attribute_label,
+    get_category_label,
+    get_module_name_label,
+)
 from logging_config import get_logger
 from module_types import (
     ModuleInfo, ModuleType, ModuleAttrType, ModuleCategory,
@@ -218,8 +225,9 @@ class ModuleOptimizer:
     使用并行的多轮遗传算法来寻找最优模组组合。
     """
 
-    def __init__(self):
+    def __init__(self, language: str = DEFAULT_LANGUAGE):
         self.logger = logger
+        self.language = language
         self._result_log_file = None
         self.ga_params = {
             'population_size': 150, 'generations': 50, 'mutation_rate': 0.1,
@@ -231,6 +239,39 @@ class ModuleOptimizer:
         self.prefilter_top_n_per_attr = 60
         self.prefilter_top_n_total_value = 100
 
+    def _is_japanese(self) -> bool:
+        return self.language == "ja"
+
+    def _display_attribute(self, attr_name: str) -> str:
+        return get_attribute_label(attr_name, self.language)
+
+    def _display_attributes(self, attr_names: List[str]) -> str:
+        return format_attribute_list(attr_names, self.language)
+
+    def _display_module_name(self, module_name: str) -> str:
+        return get_module_name_label(module_name, self.language)
+
+    def _display_category(self, category: ModuleCategory) -> str:
+        return get_category_label(category.value, self.language)
+
+    def _level_label(self, value: int) -> str:
+        if self._is_japanese():
+            if value >= 20: return "(Lv.6)"
+            if value >= 16: return "(Lv.5)"
+            if value >= 12: return "(Lv.4)"
+            if value >= 8: return "(Lv.3)"
+            if value >= 4: return "(Lv.2)"
+            if value >= 1: return "(Lv.1)"
+            return "(Lv.0)"
+
+        if value >= 20: return "(Level 6)"
+        if value >= 16: return "(Level 5)"
+        if value >= 12: return "(Level 4)"
+        if value >= 8: return "(Level 3)"
+        if value >= 4: return "(Level 2)"
+        if value >= 1: return "(Level 1)"
+        return "(Level 0)"
+
     def _get_current_log_file(self) -> Optional[str]:
         try:
             root_logger = logging.getLogger()
@@ -238,7 +279,7 @@ class ModuleOptimizer:
                 if isinstance(handler, logging.FileHandler): return handler.baseFilename
             return None
         except Exception as e:
-            self.logger.warning(f"无法获取日志文件路径: {e}")
+            self.logger.warning(f"ログファイルのパスを取得できませんでした: {e}")
             return None
 
     def _log_result(self, message: str):
@@ -248,13 +289,16 @@ class ModuleOptimizer:
                 with open(self._result_log_file, 'a', encoding='utf-8') as f:
                     f.write(message + '\n')
         except Exception as e:
-            self.logger.warning(f"记录筛选结果失败: {e}")
+            self.logger.warning(f"結果ログの記録に失敗しました: {e}")
 
     def get_module_category(self, module: ModuleInfo) -> ModuleCategory:
         return MODULE_CATEGORY_MAP.get(module.config_id, ModuleCategory.ATTACK)
 
     def prefilter_modules(self, modules: List[ModuleInfo], prioritized_attrs: Optional[List[str]] = None) -> List[ModuleInfo]:
-        self.logger.info(f"Starting pre-filtering, original number of modules: {len(modules)}")
+        if self._is_japanese():
+            self.logger.info(f"事前選別を開始します。元のモジュール数: {len(modules)}")
+        else:
+            self.logger.info(f"Starting pre-filtering, original number of modules: {len(modules)}")
         if not modules:
             return []
 
@@ -277,7 +321,10 @@ class ModuleOptimizer:
             candidate_modules.update(item[0] for item in sorted_by_attr[:self.prefilter_top_n_per_attr])
 
         filtered_modules = list(candidate_modules)
-        self.logger.info(f"Pre-filtering complete, candidate pool size: {len(filtered_modules)}")
+        if self._is_japanese():
+            self.logger.info(f"事前選別が完了しました。候補プール数: {len(filtered_modules)}")
+        else:
+            self.logger.info(f"Pre-filtering complete, candidate pool size: {len(filtered_modules)}")
         return filtered_modules
 
     # --- CORRECTED METHOD ---
@@ -309,9 +356,18 @@ class ModuleOptimizer:
         prioritized_set = set(prioritized_attrs)
         intersection = available_attrs.intersection(prioritized_set)
         if len(intersection) == 0:
-            self.logger.warning("="*50 + "\n>>> Pre-check failed: Filtering cannot proceed!\n" +
-                                f">>> Reason: No user-specified prioritized attributes found in the selected module type.\n" +
-                                f">>> Optimization skipped automatically. Please adjust module types or filter attributes and retry.\n" + "="*50)
+            if self._is_japanese():
+                self.logger.warning(
+                    "=" * 50 +
+                    "\n>>> 事前チェック失敗: フィルター処理を続行できません。\n" +
+                    ">>> 理由: 選択したモジュール種別に、指定された優先属性が存在しません。\n" +
+                    ">>> 最適化は自動で中断されました。モジュール種別または属性フィルターを見直してください。\n" +
+                    "=" * 50
+                )
+            else:
+                self.logger.warning("="*50 + "\n>>> Pre-check failed: Filtering cannot proceed!\n" +
+                                    f">>> Reason: No user-specified prioritized attributes found in the selected module type.\n" +
+                                    f">>> Optimization skipped automatically. Please adjust module types or filter attributes and retry.\n" + "="*50)
             return False
         # Allow optimization to proceed with at least one prioritized attribute
         return True
@@ -377,34 +433,53 @@ class ModuleOptimizer:
                          priority_order_mode: bool = False,
                          progress_callback: Optional[Callable[[str], None]] = None) -> List[ModuleSolution]:
         
-        self.logger.info(f"Starting optimization for {category.value} type modules (using {self.num_campaigns} parallel tasks)")
+        if self._is_japanese():
+            self.logger.info(f"{self._display_category(category)}モジュールの最適化を開始します (並列タスク数: {self.num_campaigns})")
+        else:
+            self.logger.info(f"Starting optimization for {category.value} type modules (using {self.num_campaigns} parallel tasks)")
         module_pool = modules if category == ModuleCategory.All else [m for m in modules if self.get_module_category(m) == category]
         
         if prioritized_attrs:
-            self.logger.info(f"Applying inclusive filtering: keeping modules that have at least one of the desired attributes: {prioritized_attrs}.")
+            if self._is_japanese():
+                self.logger.info(f"包含フィルターを適用します。指定属性のいずれかを持つモジュールのみ残します: {self._display_attributes(prioritized_attrs)}")
+            else:
+                self.logger.info(f"Applying inclusive filtering: keeping modules that have at least one of the desired attributes: {prioritized_attrs}.")
             original_count = len(module_pool)
             prioritized_set = set(prioritized_attrs)
             module_pool = [m for m in module_pool if any(p.name in prioritized_set for p in m.parts)]
-            self.logger.info(f"Inclusive filtering completed: module count reduced from {original_count} to {len(module_pool)}.")
+            if self._is_japanese():
+                self.logger.info(f"包含フィルターが完了しました。モジュール数: {original_count} -> {len(module_pool)}")
+            else:
+                self.logger.info(f"Inclusive filtering completed: module count reduced from {original_count} to {len(module_pool)}.")
 
         if not self._preliminary_check(module_pool, prioritized_attrs): return []
         candidate_modules = self.prefilter_modules(module_pool, prioritized_attrs)
         if len(candidate_modules) < 4:
-            self.logger.warning("Less than 4 modules after pre-filtering, unable to form valid combinations.")
+            self.logger.warning("事前選別後のモジュール数が 4 未満のため、有効な組み合わせを作成できません。" if self._is_japanese() else "Less than 4 modules after pre-filtering, unable to form valid combinations.")
             return []
 
         high_quality_modules = [m for m in candidate_modules if sum(p.value for p in m.parts) >= self.quality_threshold]
         low_quality_modules = [m for m in candidate_modules if sum(p.value for p in m.parts) < self.quality_threshold]
-        self.logger.info(f"Module pooling completed: {len(high_quality_modules)} high-quality modules, {len(low_quality_modules)} low-quality modules.")
+        if self._is_japanese():
+            self.logger.info(f"モジュール分割が完了しました。高品質: {len(high_quality_modules)} 件、低品質: {len(low_quality_modules)} 件")
+        else:
+            self.logger.info(f"Module pooling completed: {len(high_quality_modules)} high-quality modules, {len(low_quality_modules)} low-quality modules.")
         if len(high_quality_modules) < 4:
-            self.logger.warning("Less than 4 high-quality modules, using all candidate modules for optimization.")
+            self.logger.warning("高品質モジュールが 4 件未満のため、候補全体を使って最適化します。" if self._is_japanese() else "Less than 4 high-quality modules, using all candidate modules for optimization.")
             high_quality_modules = candidate_modules
             low_quality_modules = []
 
         all_best_solutions = []
         with ProcessPoolExecutor(max_workers=self.num_campaigns) as executor:
-            self.logger.info(f"--- Phase One: Running {self.num_campaigns} GA campaigns in parallel on the high-quality module pool ---")
-            if progress_callback: progress_callback(f"Running {self.num_campaigns} parallel optimization tasks...")
+            if self._is_japanese():
+                self.logger.info(f"--- フェーズ1: 高品質モジュールで {self.num_campaigns} 本の遺伝的探索を並列実行します ---")
+            else:
+                self.logger.info(f"--- Phase One: Running {self.num_campaigns} GA campaigns in parallel on the high-quality module pool ---")
+            if progress_callback:
+                progress_callback(
+                    f"{self.num_campaigns} 個の並列最適化タスクを実行中..." if self._is_japanese()
+                    else f"Running {self.num_campaigns} parallel optimization tasks..."
+                )
             futures = [executor.submit(run_single_ga_campaign, high_quality_modules, category, prioritized_attrs, self.ga_params)
                        for _ in range(self.num_campaigns)]
             for i, future in enumerate(as_completed(futures)):
@@ -413,26 +488,37 @@ class ModuleOptimizer:
                     if campaign_results:
                         all_best_solutions.extend(campaign_results)
                         best_score = campaign_results[0].optimization_score
-                        self.logger.info(f"Task {i+1}/{self.num_campaigns} completed. Highest fitness: {best_score:.2f}")
-                        if progress_callback: progress_callback(f"Task {i+1}/{self.num_campaigns} completed. Highest score: {best_score:.2f}")
+                        if self._is_japanese():
+                            self.logger.info(f"タスク {i+1}/{self.num_campaigns} 完了。最高適合度: {best_score:.2f}")
+                        else:
+                            self.logger.info(f"Task {i+1}/{self.num_campaigns} completed. Highest fitness: {best_score:.2f}")
+                        if progress_callback:
+                            progress_callback(
+                                f"タスク {i+1}/{self.num_campaigns} 完了。最高スコア: {best_score:.2f}" if self._is_japanese()
+                                else f"Task {i+1}/{self.num_campaigns} completed. Highest score: {best_score:.2f}"
+                            )
                 except Exception as e:
-                    self.logger.error(f"An optimization task failed: {e}")
+                    self.logger.error(f"最適化タスクの 1 つが失敗しました: {e}" if self._is_japanese() else f"An optimization task failed: {e}")
 
-        self.logger.info("--- Phase Two: Fine-tuning the optimal solution set using low-quality modules ---")
-        if progress_callback: progress_callback("Phase Two: Fine-tuning top results...")
+        self.logger.info("--- フェーズ2: 低品質モジュールで上位結果を微調整します ---" if self._is_japanese() else "--- Phase Two: Fine-tuning the optimal solution set using low-quality modules ---")
+        if progress_callback:
+            progress_callback("フェーズ2: 上位結果を微調整中..." if self._is_japanese() else "Phase Two: Fine-tuning top results...")
         unique_solutions = list({sol.get_combination_id(): sol for sol in all_best_solutions}.values())
         unique_solutions.sort(key=lambda s: s.optimization_score, reverse=True)
         
         refined_solutions = []
         if not low_quality_modules:
-            self.logger.info("Low-quality module pool is empty, skipping fine-tuning phase.")
+            self.logger.info("低品質モジュールがないため、微調整フェーズをスキップします。" if self._is_japanese() else "Low-quality module pool is empty, skipping fine-tuning phase.")
             refined_solutions = unique_solutions
         else:
             solutions_to_refine = unique_solutions[:30]
             for solution in solutions_to_refine:
                 best_refined_solution = self._local_search_improvement(solution, candidate_modules, category, prioritized_attrs)
                 if best_refined_solution.optimization_score > solution.optimization_score:
-                     self.logger.info(f"Solution improved by fine-tuning! Score: {solution.optimization_score:.2f} -> {best_refined_solution.optimization_score:.2f}")
+                     if self._is_japanese():
+                         self.logger.info(f"微調整で解が改善しました。スコア: {solution.optimization_score:.2f} -> {best_refined_solution.optimization_score:.2f}")
+                     else:
+                         self.logger.info(f"Solution improved by fine-tuning! Score: {solution.optimization_score:.2f} -> {best_refined_solution.optimization_score:.2f}")
                 refined_solutions.append(best_refined_solution)
         
         final_results = unique_solutions + refined_solutions
@@ -460,8 +546,15 @@ class ModuleOptimizer:
             # fallback: sort by final combat power score
             deduplicated_solutions.sort(key=lambda s: s.score, reverse=True)
 
-        self.logger.info(f"Parallel optimization completed. Found {len(deduplicated_solutions)} high-quality combinations deduplicated by attribute level.")
-        if progress_callback: progress_callback(f"Completed! Found {len(deduplicated_solutions)} unique combinations.")
+        if self._is_japanese():
+            self.logger.info(f"並列最適化が完了しました。属性レベル重複を除いた組み合わせ数: {len(deduplicated_solutions)}")
+        else:
+            self.logger.info(f"Parallel optimization completed. Found {len(deduplicated_solutions)} high-quality combinations deduplicated by attribute level.")
+        if progress_callback:
+            progress_callback(
+                f"完了しました。重複除外後の組み合わせ数: {len(deduplicated_solutions)}" if self._is_japanese()
+                else f"Completed! Found {len(deduplicated_solutions)} unique combinations."
+            )
 
         return deduplicated_solutions[:top_n]
     
@@ -486,27 +579,35 @@ class ModuleOptimizer:
         return best_solution
         
     def print_solution_details(self, solution: ModuleSolution, rank: int):
-        header = f"\n=== Rank {rank} Combination (Fitness Score: {solution.optimization_score:.2f}) ==="
+        header = (
+            f"\n=== 順位 {rank} の組み合わせ (適合度: {solution.optimization_score:.2f}) ==="
+            if self._is_japanese()
+            else f"\n=== Rank {rank} Combination (Fitness Score: {solution.optimization_score:.2f}) ==="
+        )
         print(header); self._log_result(header)
-        total_value_str = f"Total Attribute Value: {sum(solution.attr_breakdown.values())}"
+        total_value_str = (
+            f"総属性値: {sum(solution.attr_breakdown.values())}"
+            if self._is_japanese()
+            else f"Total Attribute Value: {sum(solution.attr_breakdown.values())}"
+        )
         print(total_value_str); self._log_result(total_value_str)
-        combat_power_str = f"Combat Power: {solution.score}"
+        combat_power_str = f"戦力: {solution.score}" if self._is_japanese() else f"Combat Power: {solution.score}"
         print(combat_power_str); self._log_result(combat_power_str)
-        print("\nModule List:"); self._log_result("\nModule List:")
+        module_list_title = "\nモジュール一覧:" if self._is_japanese() else "\nModule List:"
+        print(module_list_title); self._log_result(module_list_title)
         for i, module in enumerate(solution.modules, 1):
-            parts_str = ", ".join([f"{p.name}+{p.value}" for p in module.parts])
-            module_line = f"  {i}. {module.name} (Quality {module.quality}) - {parts_str}"
+            parts_str = ", ".join([f"{self._display_attribute(p.name)}+{p.value}" for p in module.parts])
+            module_line = (
+                f"  {i}. {self._display_module_name(module.name)} (品質 {module.quality}) - {parts_str}"
+                if self._is_japanese()
+                else f"  {i}. {module.name} (Quality {module.quality}) - {parts_str}"
+            )
             print(module_line); self._log_result(module_line)
-        print("\nAttribute Distribution:"); self._log_result("\nAttribute Distribution:")
+        attr_title = "\n属性分布:" if self._is_japanese() else "\nAttribute Distribution:"
+        print(attr_title); self._log_result(attr_title)
         for attr_name, value in sorted(solution.attr_breakdown.items()):
-            orname="(Level 0)"
-            if value >= 20: orname = "(Level 6)"
-            elif value >= 16: orname = "(Level 5)"
-            elif value >= 12: orname = "(Level 4)"
-            elif value >= 8: orname = "(Level 3)"
-            elif value >= 4: orname = "(Level 2)"
-            elif value >= 1: orname = "(Level 1)"
-            attr_line = f"  {attr_name}{orname}: +{value}"
+            orname = self._level_label(value)
+            attr_line = f"  {self._display_attribute(attr_name)}{orname}: +{value}"
             print(attr_line); self._log_result(attr_line)
 
     def get_optimal_solutions(self, modules: List[ModuleInfo], category: ModuleCategory = ModuleCategory.All,
@@ -518,18 +619,31 @@ class ModuleOptimizer:
         """
         separator = f"\n{'='*50}"
         print(separator); self._log_result(separator)
-        title = f"Module Combination Optimization - {category.value} Type"
+        title = (
+            f"モジュール組み合わせ最適化 - {self._display_category(category)}"
+            if self._is_japanese()
+            else f"Module Combination Optimization - {category.value} Type"
+        )
         print(title); self._log_result(title)
         print(separator); self._log_result(separator)
         
         optimal_solutions = self.optimize_modules(modules, category, top_n, prioritized_attrs, priority_order_mode, progress_callback)
 
         if not optimal_solutions:
-            msg = f"No valid combinations found that meet all filtering criteria.\nHint: Please check if the filtering attributes are too strict, or if the module pool lacks modules that meet the requirements."
+            msg = (
+                "指定した条件を全て満たす有効な組み合わせは見つかりませんでした。\n"
+                "ヒント: 属性フィルターが厳しすぎるか、必要条件を満たすモジュールがプール内に不足している可能性があります。"
+                if self._is_japanese()
+                else "No valid combinations found that meet all filtering criteria.\nHint: Please check if the filtering attributes are too strict, or if the module pool lacks modules that meet the requirements."
+            )
             print(msg); self._log_result(msg)
             return []
         
-        found_msg = f"\nFound {len(optimal_solutions)} optimal combinations deduplicated by attribute level."
+        found_msg = (
+            f"\n属性レベル重複を除いた最適な組み合わせを {len(optimal_solutions)} 件見つけました。"
+            if self._is_japanese()
+            else f"\nFound {len(optimal_solutions)} optimal combinations deduplicated by attribute level."
+        )
         print(found_msg); self._log_result(found_msg)
         
         print(separator); self._log_result(separator)

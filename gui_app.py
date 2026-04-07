@@ -1,7 +1,7 @@
 # gui_app.py
 
 import tkinter
-from tkinter import simpledialog
+from tkinter import filedialog, simpledialog
 import customtkinter as ctk
 from customtkinter import CTkFont
 import threading
@@ -11,12 +11,50 @@ import logging
 import sys
 import os
 import json
-import webbrowser
+from pathlib import Path
 from PIL import Image
 
+from localization import (
+    DEFAULT_LANGUAGE,
+    DISTRIBUTION_FILTER_ORDER,
+    get_app_translations,
+    get_attribute_label,
+    get_canonical_category,
+    get_category_label,
+    get_category_options,
+    get_distribution_filter_label,
+    get_language_code,
+    get_language_label,
+    get_language_options,
+    get_preset_display_name,
+)
+from module_csv_io import export_modules_to_csv, import_modules_from_csv
 from network_interface_util import get_network_interfaces
 from star_resonance_monitor_core import StarResonanceMonitor
 from logging_config import setup_logging
+
+APP_BASE_DIR = Path(__file__).resolve().parent
+
+
+def get_resource_base_dir() -> Path:
+    """同梱済みリソースの配置先を返す。"""
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return Path(sys._MEIPASS)
+    return APP_BASE_DIR
+
+
+def get_user_data_dir() -> Path:
+    """ユーザーが更新するデータの保存先を返す。"""
+    if getattr(sys, "frozen", False):
+        root = os.environ.get("LOCALAPPDATA")
+        if root:
+            path = Path(root) / "BPSR-AutoModules"
+        else:
+            path = Path.home() / ".bpsr_automodules"
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    return APP_BASE_DIR
 
 # --- Log Queue Handler (unchanged) ---
 class QueueHandler(logging.Handler):
@@ -42,6 +80,10 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
 
+        self.resource_base_dir = get_resource_base_dir()
+        self.user_data_dir = get_user_data_dir()
+        self.presets_file_path = self.user_data_dir / "custom_presets.json"
+
         # --- TEMA ---
         self.THEME = {
             "color": {
@@ -62,10 +104,10 @@ class App(ctk.CTk):
         }
         # --- FIN DE TEMA ---
         
-        self.title("BPSR Module Optimizer by: MrSnake")
+        self.title("BPSR モジュール最適化ツール 日本語版")
         # Aplicar color de fondo a la ventana principal
         self.configure(fg_color=self.THEME["color"]["background_main"])
-        self.iconbitmap("icon.ico")
+        self._apply_window_icon()
         self.attributes("-topmost", True)
         self.geometry("1100x1070")
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -97,84 +139,102 @@ class App(ctk.CTk):
         self.main_frame.grid_columnconfigure(1, weight=1) # Columna para el frame de instrucciones (derecha)
 
         # --- Language Selection ---
-        self.translations = {
+        self.translations = get_app_translations()
+        for language, extra_texts in {
+            "ja": {
+                "window_title": "BPSR モジュール最適化ツール 日本語版",
+                "app_title": "BPSR モジュール最適化ツール",
+                "priority_limit_warning": "優先属性は最大6件までです。",
+                "select_interface_first": "先にネットワークインターフェースを選択してください。",
+                "no_rescreen_data": "最適化に使えるモジュールデータがありません。",
+                "start_optimization": "最適化開始",
+                "import_csv": "CSV読込",
+                "export_csv": "CSV保存",
+                "csv_import_title": "モジュール CSV を読み込む",
+                "csv_export_title": "モジュール CSV を保存する",
+                "csv_import_success": "{count} 件のモジュールを CSV から読み込みました。",
+                "csv_export_success": "{count} 件のモジュールを CSV に保存しました。",
+                "csv_import_failed": "CSV の読み込みに失敗しました: {error}",
+                "csv_export_failed": "CSV の保存に失敗しました: {error}",
+                "no_export_data": "CSV に保存できるモジュールデータがありません。",
+                "stop_monitoring_before_import": "CSV を読み込む前に監視を停止してください。",
+                "captured_data_waiting_stop": "モジュール一覧を取得しました。監視停止後に最適化を実行できます。",
+                "data_captured_ready": "モジュール一覧を保持しました。最適化開始を押してください。",
+                "rescreen_requested": "=== 現在の条件で最適化を開始します ===",
+            },
             "en": {
-                "select_interface": "Select Network Interface:",
-                "select_module_type": "Select Module Type:",
-                "filter_attributes": "Filter Attributes (space separated):",
-                "select_preset": "Select Preset Filter Attributes:",
-                "recommended_combos": "Recommended combinations will only show the above filtered attributes, it is recommended to fill in all tolerable attributes.",
-                "dynamic_instruction_1": "Before pressing the ",
-                "dynamic_instruction_2": " button, move your character to a location with few players around.",
-                "waiting_for_modules": "Waiting for modules to be combined",
-                "change_channel_instruction": "Change channels in-game to start processing modules.",
-                "refilter": "🔍 Refilter",
-                "save_preset_title": "Save Preset",
-                "save_preset_prompt": "Enter a name for the current attribute selection:",
-                "delete_preset_title": "Delete Preset",
-                "delete_preset_prompt": "Are you sure you want to delete the preset '{preset_name}'?",
-                "save": "💾 Save",
-            "delete": "🗑️ Delete"
-        },
-        "es": {
-            "select_interface": "Selecciona la Interfaz de Red:",
-            "select_module_type": "Selecciona el Tipo de Módulo:",
-            "filter_attributes": "Filtrar Atributos (separados por coma):",
-            "select_preset": "Seleccionar Atributos de Filtro Predefinidos:",
-            "recommended_combos": "Las combinaciones recomendadas solo mostrarán los atributos filtrados anteriormente, se recomienda rellenar todos los atributos tolerables.",
-            "dynamic_instruction_1": "Antes de presionar el botón ",
-            "dynamic_instruction_2": " mueve tu personaje a un lugar con pocos jugadores a tu alrededor.",
-            "waiting_for_modules": "Espera a que combine los Modulos",
-            "change_channel_instruction": "Cambia de canal dentro del juego para comenzar a procesar módulos.",
-            "refilter": "🔍 Refiltrar",
-            "save_preset_title": "Guardar Preset",
-            "save_preset_prompt": "Introduce un nombre para la selección de atributos actual:",
-            "delete_preset_title": "Eliminar Preset",
-            "delete_preset_prompt": "¿Estás seguro de que quieres eliminar el preset '{preset_name}'?",
-            "save": "💾 Guardar",
-            "delete": "🗑️ Eliminar",
-            "enable_priority_ordering": "Activar Modo de Ordenamiento por Prioridad (máx. 6 atributos)",
-            "select_priority_attrs": "Selecciona atributos para priorizar (máx. 6)."
-        }
-        }
-        self.current_language = "en"
+                "window_title": "BPSR Module Optimizer 日本語版",
+                "app_title": "BPSR Module Optimizer",
+                "priority_limit_warning": "Cannot add more than 6 prioritized attributes.",
+                "select_interface_first": "Please select a network interface first.",
+                "no_rescreen_data": "No captured module data available for optimization.",
+                "start_optimization": "Optimize",
+                "import_csv": "Import CSV",
+                "export_csv": "Export CSV",
+                "csv_import_title": "Import module CSV",
+                "csv_export_title": "Export module CSV",
+                "csv_import_success": "Loaded {count} modules from CSV.",
+                "csv_export_success": "Saved {count} modules to CSV.",
+                "csv_import_failed": "Failed to import CSV: {error}",
+                "csv_export_failed": "Failed to export CSV: {error}",
+                "no_export_data": "No module data available for CSV export.",
+                "stop_monitoring_before_import": "Stop monitoring before importing a CSV file.",
+                "captured_data_waiting_stop": "Module list captured. Stop monitoring to run optimization.",
+                "data_captured_ready": "Module list retained. Press Optimize to run calculations.",
+                "rescreen_requested": "=== Starting optimization with current conditions... ===",
+            },
+            "es": {
+                "window_title": "BPSR Module Optimizer 日本語版",
+                "app_title": "BPSR Module Optimizer",
+                "priority_limit_warning": "No se pueden priorizar más de 6 atributos.",
+                "select_interface_first": "Primero selecciona una interfaz de red.",
+                "no_rescreen_data": "No hay datos capturados para optimizar.",
+                "start_optimization": "Optimizar",
+                "import_csv": "Importar CSV",
+                "export_csv": "Exportar CSV",
+                "csv_import_title": "Importar CSV de módulos",
+                "csv_export_title": "Exportar CSV de módulos",
+                "csv_import_success": "Se cargaron {count} módulos desde el CSV.",
+                "csv_export_success": "Se guardaron {count} módulos en el CSV.",
+                "csv_import_failed": "No se pudo importar el CSV: {error}",
+                "csv_export_failed": "No se pudo exportar el CSV: {error}",
+                "no_export_data": "No hay datos de módulos para exportar a CSV.",
+                "stop_monitoring_before_import": "Detén la monitorización antes de importar un CSV.",
+                "captured_data_waiting_stop": "Lista de módulos capturada. Detén la monitorización para optimizar.",
+                "data_captured_ready": "La lista de módulos se ha conservado. Pulsa Optimizar para calcular.",
+                "rescreen_requested": "=== Iniciando optimización con las condiciones actuales... ===",
+            },
+        }.items():
+            self.translations.setdefault(language, {}).update(extra_texts)
+        self.current_language = DEFAULT_LANGUAGE
+        self.current_status_key = "idle"
+        self.current_status_message = self.translations[self.current_language]["idle"]
+        self.base_instruction_key = "change_channel_instruction"
+        self.base_instruction_text = self.translations[self.current_language][self.base_instruction_key]
+        self.default_preset_key = "Manual Input / Clear"
+        self.preset_display_to_key: Dict[str, str] = {}
 
         # --- Title Frame ---
         title_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        title_frame.grid(row=0, column=0, pady=(5, 2), sticky="w", padx=5)
+        title_frame.grid(row=0, column=0, columnspan=2, pady=(5, 2), sticky="ew", padx=5)
+        title_frame.grid_columnconfigure(0, weight=1)
+        title_frame.grid_columnconfigure(1, weight=0)
 
-        app_icon_img = ctk.CTkImage(Image.open("icon.png"), size=(40, 40))
-        app_icon = ctk.CTkLabel(title_frame, image=app_icon_img, text="")
+        title_left_frame = ctk.CTkFrame(title_frame, fg_color="transparent")
+        title_left_frame.grid(row=0, column=0, sticky="w")
+
+        app_icon_img = ctk.CTkImage(Image.open(self.get_resource_path("icon.png")), size=(40, 40))
+        app_icon = ctk.CTkLabel(title_left_frame, image=app_icon_img, text="")
         app_icon.pack(side="left", padx=(0, 10))
 
-        self.title_label = ctk.CTkLabel(title_frame, text="BPSR Module Optimizer", 
+        self.title_label = ctk.CTkLabel(title_left_frame, text=self.tr("app_title"), 
                                 font=self.THEME["font"]["title"], 
                                 text_color=self.THEME["color"]["text_primary"])
         self.title_label.pack(side="left")
 
-        language_menu = ctk.CTkOptionMenu(title_frame, values=["English", "Español"], command=self.change_language)
-        language_menu.pack(side="left", padx=10)
-        language_menu.set("English")
-
-
-        # --- Social Media Links ---
-        social_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
-        social_frame.grid(row=0, column=1, pady=(5, 2), sticky="e")
-
-        kick_img = ctk.CTkImage(Image.open("Icons/kick.png"), size=(24, 24))
-        kick_icon = ctk.CTkLabel(social_frame, image=kick_img, text="", cursor="hand2")
-        kick_icon.pack(side="left", padx=2)
-        kick_icon.bind("<Button-1>", lambda e: webbrowser.open_new("https://kick.com/mrsnakevt"))
-
-        youtube_img = ctk.CTkImage(Image.open("Icons/youtube.png"), size=(24, 24))
-        youtube_icon = ctk.CTkLabel(social_frame, image=youtube_img, text="", cursor="hand2")
-        youtube_icon.pack(side="left", padx=2)
-        youtube_icon.bind("<Button-1>", lambda e: webbrowser.open_new("https://www.youtube.com/@MrSnake_VT"))
-
-        x_img = ctk.CTkImage(Image.open("Icons/x-twitter.png"), size=(24, 24))
-        x_icon = ctk.CTkLabel(social_frame, image=x_img, text="", cursor="hand2")
-        x_icon.pack(side="left", padx=2)
-        x_icon.bind("<Button-1>", lambda e: webbrowser.open_new("https://x.com/MrSnakeVT"))
+        self.language_menu = ctk.CTkOptionMenu(title_left_frame, values=get_language_options(), command=self.change_language)
+        self.language_menu.pack(side="left", padx=10)
+        self.language_menu.set(get_language_label(self.current_language))
 
         # --- Filter Frame (initially visible) ---
         self.filters_frame = ctk.CTkFrame(self.main_frame, fg_color=self.THEME["color"]["background_secondary"], corner_radius=15)
@@ -187,12 +247,12 @@ class App(ctk.CTk):
         self.filters_frame.grid_columnconfigure(4, weight=1) # Nueva columna para priority_ordering_frame
 
         # Column 0
-        self.label_category = ctk.CTkLabel(self.filters_frame, text="Select Module Type:", 
+        self.label_category = ctk.CTkLabel(self.filters_frame, text=self.tr("select_module_type"), 
                                    font=self.THEME["font"]["main"],
                                    text_color=self.THEME["color"]["text_primary"])
         self.label_category.grid(row=0, column=0, padx=5, pady=(5, 2), sticky="w")
         self.category_menu = ctk.CTkOptionMenu(
-            self.filters_frame, values=["All", "Attack", "Guard", "Support"],
+            self.filters_frame, values=get_category_options(self.current_language),
             fg_color=self.THEME["color"]["background_main"], # Fondo interior
             button_color=self.THEME["color"]["background_secondary"], # Color del botón
             button_hover_color=self.THEME["color"]["border"],
@@ -202,10 +262,10 @@ class App(ctk.CTk):
             corner_radius=8
         )
         self.category_menu.grid(row=0, column=1, padx=5, pady=2, sticky="ew")
-        self.category_menu.set("All")
+        self.category_menu.set(get_category_label("All", self.current_language))
         self.category_menu.configure(state="normal") # Ensure it\'s enabled initially
 
-        self.label_interface = ctk.CTkLabel(self.filters_frame, text="Select Network Interface:",
+        self.label_interface = ctk.CTkLabel(self.filters_frame, text=self.tr("select_interface"),
                                     font=self.THEME["font"]["main"],
                                     text_color=self.THEME["color"]["text_primary"])
         self.label_interface.grid(row=0, column=2, padx=5, pady=(5, 2), sticky="w")
@@ -229,7 +289,7 @@ class App(ctk.CTk):
         self.presets_frame.grid_columnconfigure(2, weight=0)
         self.presets_frame.grid_columnconfigure(3, weight=0)
 
-        self.label_presets = ctk.CTkLabel(self.presets_frame, text="Select Preset:",
+        self.label_presets = ctk.CTkLabel(self.presets_frame, text=self.tr("select_preset"),
                                    font=self.THEME["font"]["main"],
                                    text_color=self.THEME["color"]["text_primary"])
         self.label_presets.grid(row=0, column=0, padx=(5, 2), pady=2, sticky="w")
@@ -284,7 +344,7 @@ class App(ctk.CTk):
         # --- Create "All" button ---
         all_button = ctk.CTkButton(
             self.attributes_buttons_frame,
-            text="All",
+            text=self.tr("all"),
             command=self.toggle_all_attributes,
             fg_color=self.THEME["color"]["background_secondary"], # Color inactivo
             text_color=self.THEME["color"]["text_primary"],
@@ -306,7 +366,7 @@ class App(ctk.CTk):
             
             button = ctk.CTkButton(
                 self.attributes_buttons_frame,
-                text=attr,
+                text=self.get_display_attribute_name(attr),
                 command=lambda a=attr: self.toggle_attribute(a),
                 fg_color=self.THEME["color"]["background_secondary"], # Color inactivo
                 text_color=self.THEME["color"]["text_primary"],
@@ -328,7 +388,7 @@ class App(ctk.CTk):
 
         self.priority_order_checkbox = ctk.CTkCheckBox(
             self.priority_ordering_frame, 
-            text="Enable Priority Ordering Mode (max 6 attributes)", 
+            text=self.tr("enable_priority_ordering"), 
             font=self.THEME["font"]["main"],
             text_color=self.THEME["color"]["text_primary"],
             command=self.update_priority_attrs_ui
@@ -341,18 +401,18 @@ class App(ctk.CTk):
         # This container will hold the ordered list of attributes with up/down/remove buttons
         self.update_priority_attrs_ui() # Initial call to set visibility
 
-        # Frame para los botones de control (Start, Stop, Refilter)
+        # Frame para los botones de control (Start, Stop, Optimize)
         self.control_buttons_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.control_buttons_frame.grid(row=5, column=0, padx=5, pady=5, sticky="w")
 
-        play_icon = ctk.CTkImage(Image.open("Icons/play.png"), size=(16, 16))
-        self.start_button = ctk.CTkButton(self.control_buttons_frame, text="Start Monitoring", image=play_icon, command=self.start_monitoring,
+        play_icon = ctk.CTkImage(Image.open(self.get_resource_path("Icons", "play.png")), size=(16, 16))
+        self.start_button = ctk.CTkButton(self.control_buttons_frame, text=self.tr("start_monitoring"), image=play_icon, command=self.start_monitoring,
                                   corner_radius=8, 
                                   fg_color="#1F6AA5") # Mantén el azul por ahora o cámbialo a un color de acento
         self.start_button.pack(side="left", padx=5)
 
-        stop_icon = ctk.CTkImage(Image.open("Icons/stop.png"), size=(16, 16))
-        self.stop_button = ctk.CTkButton(self.control_buttons_frame, text="Stop Monitoring", image=stop_icon, command=self.stop_monitoring, state="disabled",
+        stop_icon = ctk.CTkImage(Image.open(self.get_resource_path("Icons", "stop.png")), size=(16, 16))
+        self.stop_button = ctk.CTkButton(self.control_buttons_frame, text=self.tr("stop_monitoring"), image=stop_icon, command=self.stop_monitoring, state="disabled",
                                   corner_radius=8, 
                                   fg_color=self.THEME["color"]["background_secondary"],
                                   text_color=self.THEME["color"]["text_primary"],
@@ -360,7 +420,7 @@ class App(ctk.CTk):
                                   border_width=0)
         self.stop_button.pack(side="left", padx=5)
         
-        self.rescreen_button = ctk.CTkButton(self.control_buttons_frame, text="\U00002700 Refiltrar", command=self.rescreen_results, state="disabled", font=self.fa_font,
+        self.rescreen_button = ctk.CTkButton(self.control_buttons_frame, text=self.tr("start_optimization"), command=self.start_optimization, state="disabled", font=self.fa_font,
                                   corner_radius=8, 
                                   fg_color=self.THEME["color"]["background_secondary"],
                                   text_color=self.THEME["color"]["text_primary"],
@@ -369,9 +429,36 @@ class App(ctk.CTk):
                                   border_color="white") # Color del borde blanco
         self.rescreen_button.pack(side="left", padx=5)
 
-        # --- Dynamic Instructions (movido a la derecha) ---
-        self.instruction_frame = ctk.CTkFrame(self.main_frame, fg_color=self.THEME["color"]["background_secondary"], corner_radius=15)
-        self.instruction_frame.grid(row=5, column=1, padx=5, pady=5, sticky="e")
+        self.import_csv_button = ctk.CTkButton(
+            self.control_buttons_frame,
+            text=self.tr("import_csv"),
+            command=self.import_modules_csv,
+            corner_radius=8,
+            fg_color=self.THEME["color"]["background_secondary"],
+            text_color=self.THEME["color"]["text_primary"],
+            hover_color=self.THEME["color"]["border"],
+            border_width=1,
+            border_color="white",
+        )
+        self.import_csv_button.pack(side="left", padx=5)
+
+        self.export_csv_button = ctk.CTkButton(
+            self.control_buttons_frame,
+            text=self.tr("export_csv"),
+            command=self.export_modules_csv,
+            state="disabled",
+            corner_radius=8,
+            fg_color=self.THEME["color"]["background_secondary"],
+            text_color=self.THEME["color"]["text_primary"],
+            hover_color=self.THEME["color"]["border"],
+            border_width=1,
+            border_color="white",
+        )
+        self.export_csv_button.pack(side="left", padx=5)
+
+        # --- Dynamic Instructions ---
+        self.instruction_frame = ctk.CTkFrame(title_frame, fg_color=self.THEME["color"]["background_secondary"], corner_radius=15)
+        self.instruction_frame.grid(row=0, column=1, padx=(10, 0), pady=0, sticky="e")
         
         self.instruction_icon = ctk.CTkLabel(self.instruction_frame, text="⚠️", font=("Segoe UI Emoji", 16), text_color="#FFCC00") # Yellow warning, reduced size
         self.instruction_icon.pack(side="left", padx=(5, 2), pady=2)
@@ -384,24 +471,22 @@ class App(ctk.CTk):
 
         # Label for simple, single-part instructions
         self.instruction_label_simple = ctk.CTkLabel(self.instruction_frame, text="", font=self.THEME["font"]["small"], text_color=self.THEME["color"]["text_primary"]) # Using THEME["font"]["small"]
-        self.base_instruction_text = "" # For animation
 
         # --- Distribution Filter ---
         self.dist_filter_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.dist_filter_frame.grid(row=6, column=0, columnspan=2, padx=5, pady=(2, 0), sticky="ew")
         self.dist_filter_frame.grid_remove() # Hide initially
 
-        self.label_dist_filter = ctk.CTkLabel(self.dist_filter_frame, text="Attr. Distribution:",
+        self.label_dist_filter = ctk.CTkLabel(self.dist_filter_frame, text=self.tr("attr_distribution"),
                                       font=self.THEME["font"]["main"],
                                       text_color=self.THEME["color"]["text_primary"])
         self.label_dist_filter.pack(side="left", padx=(5, 5))
 
         self.dist_filter_buttons: Dict[str, ctk.CTkButton] = {}
-        filters = ["All", "Lv.5", "Lv.5/Lv.5", "Lv.5/Lv.6", "Lv.6/Lv.6"]
-        for f in filters:
+        for f in DISTRIBUTION_FILTER_ORDER:
             btn = ctk.CTkButton(
                 self.dist_filter_frame,
-                text=f,
+                text=get_distribution_filter_label(f, self.current_language),
                 command=lambda name=f: self.set_distribution_filter(name),
                 fg_color=self.THEME["color"]["background_secondary"],
                 text_color=self.THEME["color"]["text_primary"],
@@ -410,7 +495,7 @@ class App(ctk.CTk):
                 corner_radius=15
             )
             btn.pack(side="left", padx=2)
-        self.dist_filter_buttons[f] = btn
+            self.dist_filter_buttons[f] = btn
 
         # --- Console Panel ---
         self.console_frame = ctk.CTkFrame(self, width=400)
@@ -438,7 +523,7 @@ class App(ctk.CTk):
         # --- Status Bar ---
         self.status_frame = ctk.CTkFrame(self, fg_color="transparent", height=30)
         self.status_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=(0, 5), sticky="ew")
-        self.status_label = ctk.CTkLabel(self.status_frame, text="Status: Idle", anchor="w", text_color=self.THEME["color"]["text_secondary"], font=self.THEME["font"]["main"])
+        self.status_label = ctk.CTkLabel(self.status_frame, text="", anchor="w", text_color=self.THEME["color"]["text_secondary"], font=self.THEME["font"]["main"])
         self.status_label.pack(side="left", padx=5, pady=1)
 
         self.log_queue = queue.Queue()
@@ -454,7 +539,7 @@ class App(ctk.CTk):
         self.attribute_images = self.load_attribute_images() # Pre-load attribute icons
 
         # --- Results Display ---
-        self.results_frame = ctk.CTkScrollableFrame(self.main_frame, label_text="Combinations",
+        self.results_frame = ctk.CTkScrollableFrame(self.main_frame, label_text=self.tr("combinations"),
                                             fg_color="transparent",
                                             label_font=self.THEME["font"]["subtitle"],
                                             label_text_color=self.THEME["color"]["text_primary"])
@@ -469,18 +554,18 @@ class App(ctk.CTk):
         self.pagination_frame.grid_columnconfigure((0, 2), weight=1) # Center the label
         self.pagination_frame.grid_remove() # Hide initially
 
-        self.prev_button = ctk.CTkButton(self.pagination_frame, text="< Previous", command=self.previous_page, state="disabled")
+        self.prev_button = ctk.CTkButton(self.pagination_frame, text=self.tr("previous"), command=self.previous_page, state="disabled")
         self.prev_button.grid(row=0, column=0, sticky="e", padx=10)
 
-        self.page_label = ctk.CTkLabel(self.pagination_frame, text="Page 1 / 1")
+        self.page_label = ctk.CTkLabel(self.pagination_frame, text=self.tr("page_template", current=1, total=1))
         self.page_label.grid(row=0, column=1, padx=10)
 
-        self.next_button = ctk.CTkButton(self.pagination_frame, text="Next >", command=self.next_page, state="disabled")
+        self.next_button = ctk.CTkButton(self.pagination_frame, text=self.tr("next"), command=self.next_page, state="disabled")
         self.next_button.grid(row=0, column=2, sticky="w", padx=10)
 
         # --- Loading Animation ---
         self.loading_frame = ctk.CTkFrame(self.main_frame)
-        self.loading_label = ctk.CTkLabel(self.loading_frame, text="Generating combinations, please wait...", font=("Arial", 18))
+        self.loading_label = ctk.CTkLabel(self.loading_frame, text=self.tr("generating_combinations"), font=("Arial", 18))
         self.loading_label.pack(pady=10, padx=10)
         self.loading_animation_label = ctk.CTkLabel(self.loading_frame, text="", font=("Courier", 20))
         self.loading_animation_label.pack(pady=5)
@@ -499,31 +584,60 @@ class App(ctk.CTk):
 
         self.after(100, self.poll_queues)
         self.update_dist_filter_buttons() # Set initial button state
-        self.change_language("English") # Set default language
+        self.change_language(get_language_label(self.current_language))
 
     def change_language(self, language: str):
-        self.current_language = "en" if language == "English" else "es"
-        lang_dict = self.translations[self.current_language]
+        current_category = get_canonical_category(self.category_menu.get()) if hasattr(self, "category_menu") else "All"
+        current_preset_key = self.preset_display_to_key.get(self.presets_menu.get(), self.default_preset_key) if hasattr(self, "presets_menu") else self.default_preset_key
+        self.current_language = get_language_code(language)
 
-        self.label_interface.configure(text=lang_dict["select_interface"])
-        self.label_category.configure(text=lang_dict["select_module_type"])
-        self.rescreen_button.configure(text=lang_dict["refilter"])
-        self.label_presets.configure(text=lang_dict.get("select_preset", "Select Preset:"))
-        self.save_preset_button.configure(text=lang_dict.get("save", "💾 Save"))
-        self.delete_preset_button.configure(text=lang_dict.get("delete", "🗑️ Delete"))
-        
+        self.title(self.tr("window_title"))
+        self.title_label.configure(text=self.tr("app_title"))
+        self.label_interface.configure(text=self.tr("select_interface"))
+        self.label_category.configure(text=self.tr("select_module_type"))
+        self.label_presets.configure(text=self.tr("select_preset"))
+        self.save_preset_button.configure(text=self.tr("save"))
+        self.delete_preset_button.configure(text=self.tr("delete"))
+        self.start_button.configure(text=self.tr("start_monitoring"))
+        self.stop_button.configure(text=self.tr("stop_monitoring"))
+        self.rescreen_button.configure(text=self.tr("start_optimization"))
+        self.import_csv_button.configure(text=self.tr("import_csv"))
+        self.export_csv_button.configure(text=self.tr("export_csv"))
+        self.priority_order_checkbox.configure(text=self.tr("enable_priority_ordering"))
+        self.label_dist_filter.configure(text=self.tr("attr_distribution"))
+        self.results_frame.configure(label_text=self.tr("combinations"))
+        self.prev_button.configure(text=self.tr("previous"))
+        self.next_button.configure(text=self.tr("next"))
+        self.loading_label.configure(text=self.tr("generating_combinations"))
+        self.category_menu.configure(values=get_category_options(self.current_language))
+        self.category_menu.set(get_category_label(current_category, self.current_language))
+        self.attribute_buttons["All"].configure(text=self.tr("all"))
+
+        if self.monitor_instance:
+            self.monitor_instance.language = self.current_language
+            self.monitor_instance.module_optimizer.language = self.current_language
+
+        for attr in self.all_attributes:
+            self.attribute_buttons[attr].configure(text=self.get_display_attribute_name(attr))
+
+        if self.current_status_key:
+            self.update_status_label(self.tr(self.current_status_key), self.current_status_key)
+        else:
+            self.update_status_label(self.current_status_message)
+        self.update_dist_filter_buttons()
+        self.update_presets_menu(current_preset_key)
+        self.update_priority_attrs_ui()
         self.update_dynamic_instruction()
-        # self.update_filter_warning_text() # Ya no es necesario
 
-        # Update instruction text if it\'s currently visible
-        if self.instruction_label_simple.winfo_viewable():
-            if "Waiting" in self.base_instruction_text:
-                 self.base_instruction_text = lang_dict["waiting_for_modules"]
-            elif "Change channels" in self.base_instruction_text:
-                 self.base_instruction_text = lang_dict["change_channel_instruction"]
-            self.instruction_label_simple.configure(text=self.base_instruction_text)
-        
-        # self.update_filter_status() # Ya no es necesario, el warning frame fue eliminado
+        if self.base_instruction_key:
+            self.base_instruction_text = self.tr(self.base_instruction_key)
+            if self.instruction_label_simple.winfo_viewable():
+                self.instruction_label_simple.configure(text=self.base_instruction_text)
+
+        if self.solutions_cache:
+            self.display_current_page()
+        else:
+            self.page_label.configure(text=self.tr("page_template", current=1, total=1))
 
 
     def update_filter_warning_text(self):
@@ -539,16 +653,126 @@ class App(ctk.CTk):
         for widget in self.instruction_text_frame.winfo_children():
             widget.destroy()
 
-        lang_dict = self.translations[self.current_language]
-        
-        ctk.CTkLabel(self.instruction_text_frame, text=lang_dict["dynamic_instruction_1"], font=self.THEME["font"]["small"]).pack(side="left")
-        ctk.CTkLabel(self.instruction_text_frame, text="Start Monitoring", font=("Segoe UI", 12, "bold"), fg_color="#1F6AA5", corner_radius=5).pack(side="left", padx=2) # Reduced font size here as well
-        ctk.CTkLabel(self.instruction_text_frame, text=lang_dict["dynamic_instruction_2"], font=self.THEME["font"]["small"]).pack(side="left")
+        ctk.CTkLabel(self.instruction_text_frame, text=self.tr("dynamic_instruction_1"), font=self.THEME["font"]["small"]).pack(side="left")
+        ctk.CTkLabel(
+            self.instruction_text_frame,
+            text=self.tr("dynamic_instruction_button"),
+            font=("Segoe UI", 12, "bold"),
+            fg_color="#1F6AA5",
+            corner_radius=5
+        ).pack(side="left", padx=2)
+        ctk.CTkLabel(self.instruction_text_frame, text=self.tr("dynamic_instruction_2"), font=self.THEME["font"]["small"]).pack(side="left")
+
+    def get_resource_path(self, *parts: str) -> str:
+        return str(self.resource_base_dir.joinpath(*parts))
+
+    def _apply_window_icon(self) -> None:
+        icon_path = Path(self.get_resource_path("icon.ico"))
+        if not icon_path.exists():
+            logging.warning(f"ウィンドウアイコンが見つかりません: {icon_path}")
+            return
+
+        try:
+            self.iconbitmap(str(icon_path))
+        except tkinter.TclError as exc:
+            logging.warning(f"ウィンドウアイコンを設定できませんでした: {exc}")
+
+    def ensure_presets_file(self) -> None:
+        if self.presets_file_path.exists():
+            return
+
+        source_path = Path(self.get_resource_path("custom_presets.json"))
+        default_presets = {self.default_preset_key: ""}
+
+        try:
+            if source_path.exists():
+                self.presets_file_path.write_text(
+                    source_path.read_text(encoding="utf-8"),
+                    encoding="utf-8",
+                )
+                return
+        except OSError as exc:
+            logging.warning(f"既定プリセットのコピーに失敗しました: {exc}")
+
+        self.presets_file_path.write_text(
+            json.dumps(default_presets, indent=4, ensure_ascii=False),
+            encoding="utf-8",
+        )
+
+    def run_file_dialog(self, callback):
+        self.attributes("-topmost", False)
+        try:
+            return callback()
+        finally:
+            self.attributes("-topmost", True)
+
+    def clear_results_display(self):
+        self.all_solutions_cache = []
+        self.solutions_cache = []
+        self.current_page = 0
+        for widget in self.results_frame.winfo_children():
+            widget.destroy()
+        self.pagination_frame.grid_remove()
+        self.dist_filter_frame.grid_remove()
+        self.results_frame.grid_remove()
+
+    def tr(self, key: str, **kwargs) -> str:
+        text = self.translations[self.current_language].get(key, self.translations["en"].get(key, key))
+        return text.format(**kwargs) if kwargs else text
+
+    def get_display_attribute_name(self, attribute_name: str) -> str:
+        return get_attribute_label(attribute_name, self.current_language)
+
+    def get_display_preset_name(self, preset_name: str) -> str:
+        return get_preset_display_name(preset_name, self.current_language)
+
+    def has_captured_module_data(self) -> bool:
+        return bool(self.monitor_instance and self.monitor_instance.has_captured_data())
+
+    def is_monitoring_active(self) -> bool:
+        return bool(self.monitor_instance and self.monitor_instance.is_running)
+
+    def get_current_optimization_settings(self):
+        category = get_canonical_category(self.category_menu.get())
+        attributes = list(self.selected_attributes)
+        prioritized_attrs = self.ordered_prioritized_attrs if self.priority_order_checkbox.get() == 1 else []
+        priority_order_mode = self.priority_order_checkbox.get() == 1
+        return category, attributes, prioritized_attrs, priority_order_mode
+
+    def create_monitor_instance(self, interface_name: str = "") -> StarResonanceMonitor:
+        category, attributes, prioritized_attrs, priority_order_mode = self.get_current_optimization_settings()
+        return StarResonanceMonitor(
+            interface_name=interface_name,
+            category=category,
+            attributes=attributes,
+            prioritized_attrs=prioritized_attrs,
+            priority_order_mode=priority_order_mode,
+            language=self.current_language,
+            on_data_captured_callback=self.enable_optimization,
+            progress_callback=self.progress_callback,
+            on_results_callback=self.results_callback,
+        )
+
+    def update_optimization_button_state(self):
+        has_data = self.has_captured_module_data()
+        is_monitoring = self.is_monitoring_active()
+        optimize_state = "normal" if has_data and not is_monitoring else "disabled"
+        export_state = "normal" if has_data and not is_monitoring else "disabled"
+        import_state = "disabled" if is_monitoring else "normal"
+
+        self.rescreen_button.configure(state=optimize_state)
+        self.export_csv_button.configure(state=export_state)
+        self.import_csv_button.configure(state=import_state)
+
+    def update_status_label(self, message: str, status_key: Optional[str] = None):
+        self.current_status_key = status_key
+        self.current_status_message = message
+        self.status_label.configure(text=f"{self.tr('status_prefix')}{message}")
 
 
     def load_font_awesome(self) -> Optional[CTkFont]:
         """Loads the Font Awesome font if available."""
-        font_path = "Font Awesome 7 Free-Solid-900.otf"
+        font_path = self.get_resource_path("Font Awesome 7 Free-Solid-900.otf")
         if os.path.exists(font_path):
             try:
                 # Load the base font for normal text
@@ -565,50 +789,48 @@ class App(ctk.CTk):
                 # We return a font with a suitable size for the buttons.
                 return CTkFont(family="Segoe UI", size=14)
             except Exception as e:
-                logging.error(f"Could not load Font Awesome font: {e}")
+                logging.error(f"Font Awesome フォントを読み込めませんでした: {e}")
                 return None
         else:
-            logging.warning(f"Font Awesome file not found at '{font_path}'. Icons will not be displayed.")
+            logging.warning(f"Font Awesome ファイルが見つかりません: '{font_path}'。アイコン文字は表示されません。")
             return None
 
     def load_module_images(self) -> Dict[str, ctk.CTkImage]:
         """Loads all module images from the Modulos directory."""
         images = {}
-        image_dir = "Modulos"
-        if not os.path.isdir(image_dir):
-            logging.warning(f"Image directory '{image_dir}' not found.")
+        image_dir = Path(self.get_resource_path("Modulos"))
+        if not image_dir.is_dir():
+            logging.warning(f"画像ディレクトリ '{image_dir}' が見つかりません。")
             return images
         
-        for filename in os.listdir(image_dir):
-            if filename.endswith(".webp"):
+        for image_path in image_dir.iterdir():
+            if image_path.suffix.lower() == ".webp":
                 try:
                     # Match names like "Epic Attack" from "Epic Attack.webp"
-                    name = os.path.splitext(filename)[0]
-                    filepath = os.path.join(image_dir, filename)
-                    img = Image.open(filepath).resize((60, 60), Image.Resampling.LANCZOS)
+                    name = image_path.stem
+                    img = Image.open(image_path).resize((60, 60), Image.Resampling.LANCZOS)
                     images[name] = ctk.CTkImage(light_image=img, dark_image=img, size=(60, 60))
                 except Exception as e:
-                    logging.error(f"Failed to load image {filename}: {e}")
+                    logging.error(f"画像 {image_path.name} の読み込みに失敗しました: {e}")
         return images
 
     def load_attribute_images(self) -> Dict[str, ctk.CTkImage]:
         """Loads all attribute icon images from the Module-Effects directory."""
         images = {}
-        image_dir = "Module-Effects"
-        if not os.path.isdir(image_dir):
-            logging.warning(f"Image directory '{image_dir}' not found.")
+        image_dir = Path(self.get_resource_path("Module-Effects"))
+        if not image_dir.is_dir():
+            logging.warning(f"画像ディレクトリ '{image_dir}' が見つかりません。")
             return images
         
-        for filename in os.listdir(image_dir):
-            if filename.endswith(".webp"):
+        for image_path in image_dir.iterdir():
+            if image_path.suffix.lower() == ".webp":
                 try:
                     # Match names like "Armor" from "Armor.webp"
-                    name = os.path.splitext(filename)[0]
-                    filepath = os.path.join(image_dir, filename)
-                    img = Image.open(filepath).resize((18, 18), Image.Resampling.LANCZOS)
+                    name = image_path.stem
+                    img = Image.open(image_path).resize((18, 18), Image.Resampling.LANCZOS)
                     images[name] = ctk.CTkImage(light_image=img, dark_image=img, size=(18, 18))
                 except Exception as e:
-                    logging.error(f"Failed to load attribute icon {filename}: {e}")
+                    logging.error(f"属性アイコン {image_path.name} の読み込みに失敗しました: {e}")
         return images
 
     def toggle_filters(self):
@@ -633,7 +855,7 @@ class App(ctk.CTk):
                 if attribute_name not in self.ordered_prioritized_attrs:
                     self.ordered_prioritized_attrs.append(attribute_name)
             else:
-                logging.warning("Cannot add more than 6 prioritized attributes.")
+                logging.warning(self.tr("priority_limit_warning"))
                 # Optionally, inform the user via a tooltip or status message
         
         # Update "All" button state
@@ -682,13 +904,14 @@ class App(ctk.CTk):
                 self.log_textbox.configure(state="disabled")
 
                 # Check for specific log message to update instructions
-                if "识别到游戏服务器" in record:
+                if "ゲームサーバーを識別しました" in record or "识别到游戏服务器" in record:
                     self.instruction_text_frame.pack_forget()
                     if not self.instruction_label_simple.winfo_viewable():
                         self.instruction_label_simple.pack(side="left", padx=(0, 5), pady=2)
                     
                     self.instruction_icon.configure(text="🔄", text_color="#1E90FF") # Blue sync icon
-                    self.base_instruction_text = self.translations[self.current_language]["waiting_for_modules"]
+                    self.base_instruction_key = "waiting_for_modules"
+                    self.base_instruction_text = self.tr(self.base_instruction_key)
                     self.instruction_label_simple.configure(text=self.base_instruction_text)
                     self.start_instruction_animation()
             except queue.Empty:
@@ -698,7 +921,7 @@ class App(ctk.CTk):
         while True:
             try:
                 message = self.progress_queue.get(block=False)
-                self.status_label.configure(text=f"Status: {message}")
+                self.update_status_label(message)
             except queue.Empty:
                 break
         
@@ -741,8 +964,7 @@ class App(ctk.CTk):
         self.dist_filter_frame.grid() # Show distribution filter
 
         self.all_solutions_cache = solutions
-        if self.all_solutions_cache:
-            self.rescreen_button.configure(state="normal") # Enable rescreen button if there are solutions
+        self.update_optimization_button_state()
         self.apply_filters_and_redisplay()
 
     def display_current_page(self):
@@ -752,12 +974,12 @@ class App(ctk.CTk):
 
         if not self.solutions_cache:
             self.pagination_frame.grid_remove()
-            no_results_label = ctk.CTkLabel(self.results_frame, text="No valid combinations found.", font=("Segoe UI", 16))
+            no_results_label = ctk.CTkLabel(self.results_frame, text=self.tr("no_valid_combinations"), font=("Segoe UI", 16))
             no_results_label.pack(pady=20)
             return
 
         total_pages = (len(self.solutions_cache) - 1) // self.results_per_page + 1
-        self.page_label.configure(text=f"Page {self.current_page + 1} / {total_pages}")
+        self.page_label.configure(text=self.tr("page_template", current=self.current_page + 1, total=total_pages))
 
         self.prev_button.configure(state="normal" if self.current_page > 0 else "disabled")
         self.next_button.configure(state="normal" if self.current_page < total_pages - 1 else "disabled")
@@ -794,7 +1016,7 @@ class App(ctk.CTk):
 
             header_label = ctk.CTkLabel(
                 left_header_frame, 
-                text=f"Rank {rank} (Score: {solution.optimization_score:.2f})",
+                text=self.tr("rank_template", rank=rank, score=solution.optimization_score),
                 font=self.THEME["font"]["subtitle"],
                 text_color=self.THEME["color"]["text_primary"]
             )
@@ -810,7 +1032,7 @@ class App(ctk.CTk):
             if isinstance(combat_power, (int, float)):
                 combat_power = f"{combat_power:.0f}"
 
-            stats_text = f"Total Attributes: {total_attr_value} | Ability Score: {combat_power}"
+            stats_text = f"{self.tr('total_attributes')}: {total_attr_value} | {self.tr('ability_score')}: {combat_power}"
             stats_label = ctk.CTkLabel(
                 right_header_frame,
                 text=stats_text,
@@ -860,7 +1082,7 @@ class App(ctk.CTk):
                         icon_label = ctk.CTkLabel(attr_line_frame, image=icon, text="")
                         icon_label.pack(side="left", padx=(0, 2))
 
-                    attr_text = f"{part.name}+{part.value}"
+                    attr_text = f"{self.get_display_attribute_name(part.name)}+{part.value}"
                     attrs_label = ctk.CTkLabel(attr_line_frame, text=attr_text, 
                                            font=self.THEME["font"]["small"],
                                            text_color=self.THEME["color"]["text_primary"])
@@ -869,7 +1091,7 @@ class App(ctk.CTk):
             stats_frame = ctk.CTkFrame(content_frame)
             stats_frame.grid(row=1, column=0, pady=5, sticky="nsew")
 
-            ctk.CTkLabel(stats_frame, text="Attribute Distribution:", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=5, pady=(2, 1))
+            ctk.CTkLabel(stats_frame, text=self.tr("attribute_distribution"), font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=5, pady=(2, 1))
             
             attr_dist_frame = ctk.CTkFrame(stats_frame, fg_color="transparent")
             attr_dist_frame.pack(anchor="w", padx=5, pady=1, fill="x")
@@ -892,14 +1114,14 @@ class App(ctk.CTk):
                     icon_label = ctk.CTkLabel(attr_line_frame, image=icon, text="")
                     icon_label.pack(side="left", padx=(0, 3))
 
-                attr_dist_text = f"{attr_name} {level_str}: +{value}"
+                attr_dist_text = f"{self.get_display_attribute_name(attr_name)} {level_str}: +{value}"
                 ctk.CTkLabel(attr_line_frame, text=attr_dist_text, font=("Segoe UI", 11), justify="left").pack(side="left")
 
     def set_distribution_filter(self, filter_name: str):
         """Sets the distribution filter and re-applies it to the cached results."""
         self.distribution_filter = filter_name
         self.update_dist_filter_buttons()
-        logging.info(f"Distribution filter set to: {filter_name}")
+        logging.info(f"属性分布フィルターを変更しました: {get_distribution_filter_label(filter_name, self.current_language)}")
         self.apply_filters_and_redisplay()
 
     def update_dist_filter_buttons(self):
@@ -909,6 +1131,7 @@ class App(ctk.CTk):
         default_color = ctk.ThemeManager.theme["CTkButton"]["fg_color"]
         
         for name, button in self.dist_filter_buttons.items():
+            button.configure(text=get_distribution_filter_label(name, self.current_language))
             if name == self.distribution_filter:
                 button.configure(fg_color=selected_color)
             else:
@@ -991,20 +1214,31 @@ class App(ctk.CTk):
             self.instruction_animation_job = None
 
     def load_presets(self):
+        self.ensure_presets_file()
         try:
-            with open("custom_presets.json", "r") as f:
+            with open(self.presets_file_path, "r", encoding="utf-8") as f:
                 self.presets = json.load(f)
+            if self.default_preset_key not in self.presets:
+                self.presets[self.default_preset_key] = ""
         except (FileNotFoundError, json.JSONDecodeError):
-            self.presets = {"Manual Input / Clear": ""} # Default
+            self.presets = {self.default_preset_key: ""} # Default
             self.save_presets_to_file()
 
     def save_presets_to_file(self):
-        with open("custom_presets.json", "w") as f:
-            json.dump(self.presets, f, indent=4)
+        self.presets_file_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.presets_file_path, "w", encoding="utf-8") as f:
+            json.dump(self.presets, f, indent=4, ensure_ascii=False)
 
-    def update_presets_menu(self):
-        self.presets_menu.configure(values=list(self.presets.keys()))
-        self.presets_menu.set("Manual Input / Clear")
+    def update_presets_menu(self, selected_preset_key: Optional[str] = None):
+        display_values = []
+        self.preset_display_to_key = {}
+        for preset_name in self.presets.keys():
+            display_name = self.get_display_preset_name(preset_name)
+            display_values.append(display_name)
+            self.preset_display_to_key[display_name] = preset_name
+        self.presets_menu.configure(values=display_values)
+        target_preset = selected_preset_key if selected_preset_key in self.presets else self.default_preset_key
+        self.presets_menu.set(self.get_display_preset_name(target_preset))
 
     def update_priority_attrs_ui(self):
         """Builds or clears the UI for ordered prioritized attributes based on checkbox state."""
@@ -1016,7 +1250,7 @@ class App(ctk.CTk):
             self.priority_attrs_container.grid() # Ensure container is visible
             
             if not self.ordered_prioritized_attrs:
-                label = ctk.CTkLabel(self.priority_attrs_container, text="Select attributes to prioritize (max 6).", 
+                label = ctk.CTkLabel(self.priority_attrs_container, text=self.tr("select_priority_attrs"), 
                                      font=self.THEME["font"]["small"], 
                                      text_color=self.THEME["color"]["text_secondary"])
                 label.pack(pady=5)
@@ -1028,7 +1262,7 @@ class App(ctk.CTk):
                 attr_row_frame.grid_columnconfigure(0, weight=1) # Attribute name takes most space
 
                 # Attribute Name
-                attr_label = ctk.CTkLabel(attr_row_frame, text=f"{idx+1}. {attr_name}", 
+                attr_label = ctk.CTkLabel(attr_row_frame, text=f"{idx+1}. {self.get_display_attribute_name(attr_name)}", 
                                           font=self.THEME["font"]["main"], 
                                           text_color=self.THEME["color"]["text_primary"],
                                           anchor="w")
@@ -1087,6 +1321,7 @@ class App(ctk.CTk):
             self.update_filter_status() # Update warning status
 
     def apply_preset(self, preset_name: str):
+        preset_name = self.preset_display_to_key.get(preset_name, preset_name)
         attributes_str = self.presets.get(preset_name, "")
         preset_attributes = set()
         if attributes_str:
@@ -1121,9 +1356,8 @@ class App(ctk.CTk):
         self.update_priority_attrs_ui()
 
     def save_preset(self):
-        lang_dict = self.translations[self.current_language]
-        title = lang_dict.get("save_preset_title", "Save Preset")
-        prompt = lang_dict.get("save_preset_prompt", "Enter a name for the current attribute selection:")
+        title = self.tr("save_preset_title")
+        prompt = self.tr("save_preset_prompt")
         
         dialog = ctk.CTkInputDialog(text=prompt, title=title)
         self.attributes("-topmost", False)
@@ -1135,17 +1369,17 @@ class App(ctk.CTk):
             current_attributes = ", ".join(sorted(list(self.selected_attributes)))
             self.presets[preset_name] = current_attributes
             self.save_presets_to_file()
-            self.update_presets_menu()
-            self.presets_menu.set(preset_name)
+            self.update_presets_menu(preset_name)
+            self.presets_menu.set(self.get_display_preset_name(preset_name))
 
     def delete_preset(self):
-        preset_name = self.presets_menu.get()
-        if preset_name == "Manual Input / Clear":
+        preset_display_name = self.presets_menu.get()
+        preset_name = self.preset_display_to_key.get(preset_display_name, preset_display_name)
+        if preset_name == self.default_preset_key:
             return # Cannot delete the default
         
-        lang_dict = self.translations[self.current_language]
-        title = lang_dict.get("delete_preset_title", "Delete Preset")
-        prompt = lang_dict.get("delete_preset_prompt", "Are you sure you want to delete the preset '{preset_name}'?").format(preset_name=preset_name)
+        title = self.tr("delete_preset_title")
+        prompt = self.tr("delete_preset_prompt", preset_name=self.get_display_preset_name(preset_name))
 
         if tkinter.messagebox.askyesno(title, prompt):
             if preset_name in self.presets:
@@ -1153,49 +1387,86 @@ class App(ctk.CTk):
                 self.save_presets_to_file()
                 self.update_presets_menu()
 
+    def export_modules_csv(self):
+        if not self.has_captured_module_data():
+            logging.warning(self.tr("no_export_data"))
+            return
+
+        file_path = self.run_file_dialog(
+            lambda: filedialog.asksaveasfilename(
+                title=self.tr("csv_export_title"),
+                defaultextension=".csv",
+                filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+                initialdir=str(self.user_data_dir),
+                initialfile="modules.csv",
+            )
+        )
+        if not file_path:
+            return
+
+        try:
+            modules = self.monitor_instance.captured_modules if self.monitor_instance else []
+            export_modules_to_csv(modules, file_path)
+            message = self.tr("csv_export_success", count=len(modules))
+            logging.info(f"{message} ({file_path})")
+            self.update_status_label(message)
+        except Exception as exc:
+            logging.error(self.tr("csv_export_failed", error=exc))
+
+    def import_modules_csv(self):
+        if self.is_monitoring_active():
+            logging.warning(self.tr("stop_monitoring_before_import"))
+            return
+
+        file_path = self.run_file_dialog(
+            lambda: filedialog.askopenfilename(
+                title=self.tr("csv_import_title"),
+                filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+                initialdir=str(self.user_data_dir),
+            )
+        )
+        if not file_path:
+            return
+
+        try:
+            modules = import_modules_from_csv(file_path)
+            self.clear_results_display()
+            self.monitor_instance = self.create_monitor_instance("")
+            self.monitor_instance.captured_modules = modules
+            self.monitor_thread = None
+            message = self.tr("csv_import_success", count=len(modules))
+            logging.info(f"{message} ({file_path})")
+            self.enable_optimization()
+        except Exception as exc:
+            logging.error(self.tr("csv_import_failed", error=exc))
+
     def start_monitoring(self):
         selected_interface_display = self.interface_menu.get()
         if not selected_interface_display:
-            logging.error("Error: Please select a network interface first!")
+            logging.error(self.tr("select_interface_first"))
             return
         
         interface_name = self.interface_map[selected_interface_display]
-        category = self.category_menu.get()
-        attributes = list(self.selected_attributes)
-        prioritized_attrs = self.ordered_prioritized_attrs if self.priority_order_checkbox.get() == 1 else []
-        priority_order_mode = self.priority_order_checkbox.get() == 1
 
         self.log_textbox.configure(state="normal")
         self.log_textbox.delete("1.0", "end")
-        self.log_textbox.insert("end", "After pressing the start button and choosing the filter, please switch channels in the game in a place with few players around you.\n\n")
+        self.log_textbox.insert("end", self.tr("start_notice"))
         self.log_textbox.configure(state="disabled")
-        self.status_label.configure(text="Status: Starting monitoring...")
+        self.update_status_label(self.tr("starting_monitoring"), "starting_monitoring")
         
         # Update instruction label
         self.instruction_text_frame.pack_forget()
         self.instruction_label_simple.pack(side="left", padx=(0, 5), pady=2)
         self.instruction_icon.configure(text="⚠️", text_color="#FFA500") # Orange warning
-        self.base_instruction_text = self.translations[self.current_language]["change_channel_instruction"]
+        self.base_instruction_key = "change_channel_instruction"
+        self.base_instruction_text = self.tr(self.base_instruction_key)
         self.instruction_label_simple.configure(text=self.base_instruction_text)
         self.instruction_frame.grid()
 
         # Clear previous results and cache
-        self.solutions_cache = []
-        self.current_page = 0
-        for widget in self.results_frame.winfo_children():
-            widget.destroy()
-        self.pagination_frame.grid_remove()
+        self.clear_results_display()
 
-        self.monitor_instance = StarResonanceMonitor(
-            interface_name=interface_name,
-            category=category,
-            attributes=attributes,
-            prioritized_attrs=prioritized_attrs,
-            priority_order_mode=priority_order_mode,
-            on_data_captured_callback=self.enable_rescreening,
-            progress_callback=self.progress_callback,
-            on_results_callback=self.results_callback # Pass results callback
-        )
+        self.monitor_instance = self.create_monitor_instance(interface_name)
         
         self.monitor_thread = threading.Thread(target=self.monitor_instance.start_monitoring, daemon=True)
         self.monitor_thread.start()
@@ -1204,8 +1475,8 @@ class App(ctk.CTk):
         self.stop_button.configure(state="normal")
         self.interface_menu.configure(state="disabled")
         self.category_menu.configure(state="normal")
-        self.rescreen_button.configure(state="disabled")
-        self.status_label.configure(text="Status: Monitoring game data...")
+        self.update_optimization_button_state()
+        self.update_status_label(self.tr("monitoring_game_data"), "monitoring_game_data")
 
     def stop_monitoring(self):
         if self.monitor_instance:
@@ -1213,29 +1484,42 @@ class App(ctk.CTk):
         if self.monitor_thread and self.monitor_thread.is_alive():
             self.monitor_thread.join(timeout=1.0)
 
-        self.monitor_instance = None
         self.monitor_thread = None
 
         self.start_button.configure(state="normal")
         self.stop_button.configure(state="disabled")
         self.interface_menu.configure(state="normal")
         self.category_menu.configure(state="normal") # Category menu should be enabled after stopping
-        self.rescreen_button.configure(state="disabled")
-        self.status_label.configure(text="Status: Idle")
+        self.update_optimization_button_state()
+        if self.has_captured_module_data():
+            self.update_status_label(self.tr("data_captured_ready"), "data_captured_ready")
+        else:
+            self.update_status_label(self.tr("idle"), "idle")
         self.dist_filter_frame.grid_remove() # Hide distribution filter
         self.stop_instruction_animation()
 
-        # Reset instruction label to initial state
+        # Reset instruction label to the appropriate state
         self.instruction_label_simple.pack_forget()
-        self.update_dynamic_instruction() # Re-create the initial instruction in the correct language
-        self.instruction_text_frame.pack(side="left", padx=(0, 10), pady=5)
-        self.instruction_icon.configure(text="⚠️", text_color="#FFCC00") # Yellow warning
+        if self.has_captured_module_data():
+            ready_message = self.tr("data_captured_ready")
+            self.base_instruction_key = "data_captured_ready"
+            self.base_instruction_text = ready_message
+            self.instruction_label_simple.configure(text=ready_message)
+            self.instruction_label_simple.pack(side="left", padx=(0, 5), pady=2)
+            self.instruction_text_frame.pack_forget()
+            self.instruction_icon.configure(text="✓", text_color="#32CD32")
+        else:
+            self.base_instruction_key = "change_channel_instruction"
+            self.base_instruction_text = self.tr(self.base_instruction_key)
+            self.update_dynamic_instruction() # Re-create the initial instruction in the correct language
+            self.instruction_text_frame.pack(side="left", padx=(0, 10), pady=5)
+            self.instruction_icon.configure(text="⚠️", text_color="#FFCC00") # Yellow warning
         self.instruction_frame.grid()
 
-    def rescreen_results(self):
-        """Rescreens existing data"""
+    def start_optimization(self):
+        """保持中のモジュール一覧を使って最適化を実行する。"""
         if not self.monitor_instance or not self.monitor_instance.has_captured_data():
-            logging.warning("No captured module data available for rescreening.")
+            logging.warning(self.tr("no_rescreen_data"))
             return
 
         # Clear cache and show loading animation
@@ -1247,23 +1531,47 @@ class App(ctk.CTk):
         self.loading_frame.grid(row=8, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
         self.start_animation()
         
-        category = self.category_menu.get()
+        category = get_canonical_category(self.category_menu.get())
         attributes = list(self.selected_attributes)
         prioritized_attrs = self.ordered_prioritized_attrs if self.priority_order_checkbox.get() == 1 else []
         priority_order_mode = self.priority_order_checkbox.get() == 1
         
-        logging.info("=== User requested rescreening with new conditions... ===")
+        logging.info(self.tr("rescreen_requested"))
+        self.rescreen_button.configure(state="disabled")
         
         threading.Thread(
-            target=self.monitor_instance.rescreen_modules,
+            target=self.monitor_instance.optimize_modules,
             args=(category, attributes, prioritized_attrs, priority_order_mode),
             daemon=True
         ).start()
     
-    def enable_rescreening(self):
-        """Callback function to enable the "Rescreen" button"""
-        self.rescreen_button.configure(state="normal")
-        self.status_label.configure(text="Status: Data captured, ready to rescreen.")
+    def rescreen_results(self):
+        """互換性維持用。内部的には最適化開始を実行する。"""
+        self.start_optimization()
+
+    def enable_optimization(self):
+        """キャプチャ完了通知を UI スレッドへ中継する。"""
+        self.after(0, self._on_captured_data_ready)
+
+    def _on_captured_data_ready(self):
+        self.stop_instruction_animation()
+        self.instruction_text_frame.pack_forget()
+        if not self.instruction_label_simple.winfo_viewable():
+            self.instruction_label_simple.pack(side="left", padx=(0, 5), pady=2)
+
+        self.update_optimization_button_state()
+        if self.is_monitoring_active():
+            message = self.tr("captured_data_waiting_stop")
+            self.base_instruction_key = "captured_data_waiting_stop"
+        else:
+            message = self.tr("data_captured_ready")
+            self.base_instruction_key = "data_captured_ready"
+
+        self.base_instruction_text = message
+        self.instruction_label_simple.configure(text=message)
+        self.instruction_icon.configure(text="✓", text_color="#32CD32")
+        self.instruction_frame.grid()
+        self.update_status_label(message, "captured_data_waiting_stop" if self.is_monitoring_active() else "data_captured_ready")
         
     def on_closing(self):
         self.stop_monitoring()

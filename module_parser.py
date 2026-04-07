@@ -33,7 +33,7 @@ class ModuleParser:
         仅解析模组信息并根据基础规则进行过滤，不再调用优化器。
         返回解析后的模组列表。
         """
-        self.logger.info("开始解析模组...")
+        self.logger.info("モジュール解析を開始します...")
         mod_infos = v_data.Mod.ModInfos
         modules = []
 
@@ -48,7 +48,7 @@ class ModuleParser:
                     if not mod_info_details: continue
 
                     module_info = ModuleInfo(
-                        name=MODULE_NAMES.get(config_id, f"未知模组({config_id})"),
+                        name=MODULE_NAMES.get(config_id, f"不明なモジュール({config_id})"),
                         config_id=config_id,
                         uuid=item.Uuid,
                         quality=item.Quality,
@@ -69,16 +69,16 @@ class ModuleParser:
                         if i < len(init_link_nums):
                             module_info.parts.append(ModulePart(
                                 id=part_id,
-                                name=MODULE_ATTR_NAMES.get(part_id, f"未知属性({part_id})"),
+                                name=MODULE_ATTR_NAMES.get(part_id, f"不明な属性({part_id})"),
                                 value=init_link_nums[i]
                             ))
                     modules.append(module_info)
         
-        self.logger.info(f"共解析到 {len(modules)} 个模组。")
+        self.logger.info(f"{len(modules)} 件のモジュールを解析しました。")
         
         if attributes or exclude_attributes:
             filtered_modules = self._filter_modules_by_attributes(modules, attributes, exclude_attributes, match_count)
-            self.logger.info(f"根据基础属性规则筛选后剩余 {len(filtered_modules)} 个模组。")
+            self.logger.info(f"基本属性ルールで絞り込んだ後の残件数: {len(filtered_modules)}")
             return filtered_modules
         else:
             return modules

@@ -55,8 +55,8 @@ def setup_logging(level=logging.INFO, debug_mode=False):
     
     # Log configuration information
     logger = logging.getLogger(__name__)
-    logger.info(f"Logging system initialized - Level: {logging.getLevelName(level)}")
-    logger.info(f"Log file: {log_file}")
+    logger.info(f"ログ設定を初期化しました - レベル: {logging.getLevelName(level)}")
+    logger.info(f"ログファイル: {log_file}")
 
 
 def get_logger(name):
